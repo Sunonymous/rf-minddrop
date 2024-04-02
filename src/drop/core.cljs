@@ -30,13 +30,19 @@
 
 ;;;;;;;;;;;;;;;;
 ;; Predicates ;
+
 (defn has-source?
-  "Returns true only if drop's source matches a given ID."
-  [source-id drop]
-  (= source-id (:source drop)))
+  "Returns true only if drop's source matches a given ID.
+   If provided only the source-id, returns a curried function
+   which takes a drop."
+  ([source-id drop]
+   (= source-id (:source drop)))
+  ([source-id] (fn [drop] (has-source? source-id drop))))
 
 (defn untouched? [drop]
    (not (:touched drop)))
+
+(def touched? (complement untouched?))
 
 (defn label-includes?
   "True if a drop's label includes a certain substring.

@@ -13,3 +13,7 @@
 (rf/reg-sub
  ::user
  (fn [db] (:user db)))
+
+(rf/reg-sub
+ ::focused-ids
+ (fn [db] (:focused-ids db)))

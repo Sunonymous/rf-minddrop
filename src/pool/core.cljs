@@ -1,7 +1,7 @@
 (ns pool.core
-  (:require [drop.core :refer [constants untouch drop->property-and-id has-source? untouched?]]))
+  (:require [drop.core :as drop]))
 
-;; Functions for working with a collection of drops, ie. "pools".
+;; Functions for working with a collection of drops, ie. a "pool".
 
 ;;;;;;;;;;;
 ;; Views ;
@@ -15,26 +15,35 @@
          keys
          (apply max)
          inc)
-    (constants :master-id)))
+    (drop/constants :master-id)))
 
-(defn group-with-id-and
-  [kw drops]
-  (into {}
-        (map (fn [[_ drop]] (drop->property-and-id kw drop)) drops)))
+;; TODO test me more thoroughly!
+(defn pool-filters->predicate
+  "Given a map containing kw options for filtering, returns the
+   predicate for use in the filter function. Filters may be:
+   :untouched -- true / false
+   :source-id -- (optional) <source id>
+   :label     -- substring included in label"
+  [filters focused-ids]
+    (fn [drop]
+      (and
+       (not= (drop :id) (drop/constants :master-id))
+       (if (filters :untouched)
+         (drop/untouched? drop)
+         (drop/touched? drop))
+       (if (filters :source)
+         (drop/has-source? (:source filters) drop)
+         true) ;; equivalent of searching all sources
+       (if (seq (filters :label))
+         (drop/label-includes? (filters :label) drop)
+         true)
+       (when (not= (drop :id) (filters :source))
+         true))))
 
-;; TODO: function needs refactored to receive a dynamic filtering predicate
 (defn pool->queue
-  "Forms a vector of drop IDs for use in a queue for explore mode.
-   If focused IDs are provided, gives only drops matching those IDs."
-  [focused-ids source-id pool]
-  (mapv (fn [[id _]] id)
-        (filter (fn [[_ drop]] (if (seq focused-ids)
-                                 (focused-ids (:id drop))
-                                 (and
-                                  (has-source? drop source-id)
-                                  (untouched? drop)
-                                  (not= (drop :id) source-id))))
-                pool)))
+  [predicate pool]
+  (mapv (fn [[id _]] id) ;; reduce to a vector of ids only
+        (filter (fn [[_ drop]] (predicate drop)) pool)))
 
 ;;;;;;;;;;;;;;;;
 ;; Predicates ;
@@ -43,18 +52,23 @@
   "Helper which returns 1 if given the master source ID,
    and 0 otherwise."
   [source-id]
-  (if (= source-id (:master-id constants))
+  (if (= source-id (:master-id drop/constants))
     1
     0))
 
-(defn need-refresh?
+(defn source-needs-refresh?
   "Returns true if a given source ID contains at least one drop,
    and every drop within that source has been touched."
-  [source-id drops]
-  (< (min-num-of-inner-drops source-id)
-     (count (filter
-             (fn [[_ drop]] (has-source? source-id drop))
-             drops))))
+  [source-id pool]
+  (let [drops-in-source (filter
+                         (fn [[_ drop]]
+                           (and ;; don't count the master id
+                            (not= (drop :id) (drop/constants :master-id))
+                            (drop/has-source? source-id drop)))
+                         pool)]
+    (and
+     (< 0 (count drops-in-source))
+     (every? (fn [[_ drop]] (drop/touched? drop)) drops-in-source))))
 
 ;;;;;;;;;;;;;
 ;; Actions ;
@@ -70,7 +84,7 @@
               pool)))
   ([f pool] (do-to-drops f true pool)))
 
-(defn refresh
-  "Untouches all drops in pool."
-  [source-id drops]
-  (do-to-drops untouch #(= (:source %) source-id) drops))
+(defn refresh-source
+  "Untouches all drops matching a provided source id."
+  [source-id pool]
+  (do-to-drops drop/untouch (drop/has-source? source-id) pool))

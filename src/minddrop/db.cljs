@@ -23,7 +23,7 @@
                                            (s/valid? ::drop drop)))))
 (s/def ::queue     (s/coll-of ::id))
 ; DB-full
-;; TODO revise with new format
+;; TODO revise spec with new format
 (s/def ::db (s/keys :req-un [::source ::pool ::focused-ids ::queue]))
 
 ;;;;;;;;;;;;;;;;
