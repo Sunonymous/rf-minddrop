@@ -1,5 +1,6 @@
 (ns minddrop.views
   (:require
+   [goog.functions  :refer [debounce]]
    [reagent.core    :as reagent]
    [minddrop.config :as config]
    [minddrop.events :as events]
@@ -58,12 +59,58 @@
                                          ::events/focus-drop) drop-id])}
      (str (if is-focused? "Unfocus" "Focus") " Drop")]))
 
+(defn delete-drop-btn
+  "Because deleting a drop can have more serious effects, this
+   component needs to be passed additional data. It removes all
+   inner drops as well, and then moves back to the master source
+   if it happened to remove the active source drop."
+  [drop-id source pool]
+  [:button {:on-click (fn [_] (let [dependents (pool/dependent-drops @pool drop-id)
+                                          confirmation-msg (str "Are you sure you want to delete this drop?\n"
+                                                                (when (seq dependents)
+                                                                  (str (count dependents) " inner drop(s) will be deleted.")))
+                                          confirmed? (js/confirm confirmation-msg)]
+                                      (when confirmed?
+                                        (doseq [id (conj dependents drop-id)]
+                                          (rf/dispatch [::events/remove-drop id]))
+                                        (when (nil? (@pool @source)) ;; move back to master if necessary
+                                          (rf/dispatch [::events/enter-drop (drop/constants :master-id)])))))}
+         "Delete Drop"])
+
 ;;;;;;;;;;;;;;;
 ;; Open Drop ;
 
 (defn open-drop-display
-  []
-  (let []))
+  [drop-id]
+  (let [pool        (rf/subscribe [::subs/pool])
+        notes-open? (reagent/atom false)
+        live-notes  (reagent/atom (get-in @pool [drop-id :notes]))
+        save-fn     (debounce (fn [_] (rf/dispatch-sync [::events/renote-drop drop-id @live-notes])
+                                (js/console.log "Notes Saved!")) 2500)]
+    (fn [drop-id]
+      (let [drop (@pool drop-id)
+            child-count (count (pool/immediate-children drop-id @pool))]
+        [:div#drop-content
+         [:div#drop-header
+          [:h3#drop-label (:label drop)]
+          (when (and
+                 (not @focus-mode?)
+                 (seq (drop :notes)))
+            [:button#drop-note-toggle.clean
+             {:on-click #(swap! notes-open? not)}
+             (if @notes-open? "v" "...")])
+          (when (and
+                 (not @focus-mode?)
+                 (pos? child-count))
+             [:p.drop-indicator (repeat child-count "🌢 ")])]
+         (if @focus-mode?
+           [:textarea#drop-notes-editable
+            {:value @live-notes
+             :on-input (fn [e] (save-fn)
+                         (reset! live-notes (-> e .-target .-value)))}]
+           (when @notes-open?
+             [:p#drop-notes  (:notes drop)]))
+         ]))))
 
 ;;;;;;;;;
 ;; App ;
@@ -93,9 +140,10 @@
        [:h2 (if @focus-mode?
               "( focused )"
               (:label (@pool @source)))]
-       [:p (repeat (count queue) "• ")]]
+       [:p.drop-indicator (repeat (count queue) "🌢 ")]]
       [:div#source-buttons
-       [add-drop-btn (pool/next-id @pool) @source]
+       (when (not @focus-mode?)
+         [add-drop-btn (pool/next-id @pool) @source])
        (when (and
               (not @focus-mode?) ;; don't change source when focused
               (not= @source (drop/constants :master-id)))
@@ -112,9 +160,7 @@
 ;; Open Drop Display
      [:div#drop-display
       (if open-drop
-        [:div#drop-content
-         [:h3#drop-label (:label open-drop)]
-         [:p#drop-notes  (:notes open-drop)]]
+        [open-drop-display open-id]
         [:div#no-drops
          [:p "No drop to display!"]
          (when (pool/source-needs-refresh? @source @pool)
@@ -123,8 +169,7 @@
 ;; Drop Controls
      (when open-drop
        [:div#drop-controls
-        [:button {:on-click #(rf/dispatch [::events/remove-drop open-id])}
-         "Delete Drop"]
+        [delete-drop-btn open-id source pool]
         (if @focus-mode?
           (when (< 1 (count @focused-ids))
             [:button {:on-click #(rf/dispatch [::events/rotate-focused-ids])}
@@ -140,5 +185,4 @@
        [:div#debug-controls
         [:button {:on-click #(rf/dispatch [::events/debug-set-pool (js/window.prompt "Set DB pool to value:")])}
          "Set DB"]
-       [:button {:on-click #(rf/dispatch [::events/debug-insert-notes open-id "blah blah blah" ])}
-         "Insert Notes"]])]))
+       ])]))

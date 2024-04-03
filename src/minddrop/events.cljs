@@ -87,8 +87,3 @@
      (fn [db [_ next-pool]]
        (let [data (read-string next-pool)]
          (assoc db :pool data))))
-
-(rf/reg-event-db
- ::debug-insert-notes
- (fn [db [_ drop-id]]
-   (update-in db [:pool drop-id] drop/renote "Inserted notes. These notes are long. Like really long.")))

@@ -3,8 +3,43 @@
 
 ;; Functions for working with a collection of drops, ie. a "pool".
 
-;;;;;;;;;;;
-;; Views ;
+(defn immediate-children
+  "Returns the immediate inner drops given a particular source-id."
+  [source-id pool]
+  (filter
+   (fn [[_ drop]]
+     (and ;; don't count the master id
+      (not= (drop :id) (drop/constants :master-id))
+      (drop/has-source? source-id drop)))
+   pool))
+
+(defn source-needs-refresh?
+  "Returns true if a given source ID contains at least one drop,
+   and every drop within that source has been touched."
+  [source-id pool]
+  (let [drops-in-source (immediate-children source-id pool)]
+    (and
+     (< 0 (count drops-in-source))
+     (every? (fn [[_ drop]] (drop/touched? drop)) drops-in-source))))
+
+(defn- is-nested-within?
+  "A very inefficient utility function which determines if,
+   somewhere along the chain of sources, a given drop ID is
+   within a particular source."
+  [query-id drop-id pool]
+  (let [source-id (:source (pool drop-id))
+        master-id (drop/constants :master-id)]
+    (cond
+      (or
+       (= source-id master-id)
+       (nil? (pool source-id))) ;; just in case
+      false
+
+      (= source-id query-id)
+      true
+
+      :otherwise
+      (recur query-id source-id pool))))
 
 (defn next-id
   "Given a map of drops, returns the proper integer ID
@@ -45,30 +80,11 @@
   (mapv (fn [[id _]] id) ;; reduce to a vector of ids only
         (filter (fn [[_ drop]] (predicate drop)) pool)))
 
-;;;;;;;;;;;;;;;;
-;; Predicates ;
-
-(defn- min-num-of-inner-drops
-  "Helper which returns 1 if given the master source ID,
-   and 0 otherwise."
-  [source-id]
-  (if (= source-id (:master-id drop/constants))
-    1
-    0))
-
-(defn source-needs-refresh?
-  "Returns true if a given source ID contains at least one drop,
-   and every drop within that source has been touched."
-  [source-id pool]
-  (let [drops-in-source (filter
-                         (fn [[_ drop]]
-                           (and ;; don't count the master id
-                            (not= (drop :id) (drop/constants :master-id))
-                            (drop/has-source? source-id drop)))
-                         pool)]
-    (and
-     (< 0 (count drops-in-source))
-     (every? (fn [[_ drop]] (drop/touched? drop)) drops-in-source))))
+(defn dependent-drops [pool outer-id]
+    (->> pool
+         (filter (fn [[id _]] (is-nested-within? outer-id id pool)))
+         (map first)
+         vec))
 
 ;;;;;;;;;;;;;
 ;; Actions ;

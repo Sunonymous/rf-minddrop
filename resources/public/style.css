@@ -3,6 +3,18 @@ body {
     margin-left: 8px;
 }
 
+/* Remove default button styling */
+button.clean {
+	background: none;
+	color: inherit;
+	border: 1px solid black;
+    border-radius: 8px;
+	padding: 4px 6px;
+	font: inherit;
+	cursor: pointer;
+	outline: inherit;
+}
+
 #minddrop {
     display: flex;
     flex-direction: column;
@@ -36,10 +48,28 @@ body {
 }
 
 #drop-display {
+    max-width: 80%;
+    align-self: center;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border: 2px solid goldenrod;
+    /* border: 2px solid goldenrod; */
+}
+
+#drop-header {
+    display: flex;
+    gap: 8px;
+}
+
+#drop-note-toggle {
+    transition: transform 0.5s;
+}
+#drop-note-toggle.open {
+    transform: rotate(180deg);
+}
+
+.drop-indicator {
+    font-size: 12px;
 }
