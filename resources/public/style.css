@@ -63,6 +63,13 @@ button.clean {
     gap: 8px;
 }
 
+#no-drops {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
 #drop-note-toggle {
     transition: transform 0.5s;
 }
