@@ -173,16 +173,11 @@
         (if @focus-mode?
           (when (< 1 (count @focused-ids))
             [:button {:on-click #(rf/dispatch [::events/rotate-focused-ids])}
-           "Next Drop"])
+             "Next Drop"])
           [:button {:on-click #(rf/dispatch [::events/touch-drop open-id])}
            "Next Drop"])
         (when (not @focus-mode?)
           [:button {:on-click #(rf/dispatch [::events/enter-drop open-id])}
            "Enter Drop"])
         [focus-toggle-btn @focused-ids open-id]
-        [relabel-drop-btn open-id]])
-     (when config/debug?
-       [:div#debug-controls
-        [:button {:on-click #(rf/dispatch [::events/debug-set-pool (js/window.prompt "Set DB pool to value:")])}
-         "Set DB"]
-       ])]))
+        [relabel-drop-btn open-id]])]))
