@@ -2,35 +2,26 @@
 
 A re-frame application designed to assist the organization of your mind.
 
-## Project Overview
+## Overview
 
+Minddrop is an application to keep your mind organized. It is an organizer of process, rather than information.
 
-#### Directory structure
+Our minds connect with an incredible amount of ideas and inspirations and it can be challenging to navigate them in an efficient or effective way. That is what Minddrop is designed to assist with.
 
-* [`/`](/../../): project config files
-* [`dev/`](dev/): source files compiled only with the [dev](#running-the-app) profile
-  - [`user.cljs`](dev/cljs/user.cljs): symbols for use during development in the
-[ClojureScript REPL](#connecting-to-the-browser-repl-from-a-terminal)
-* [`resources/public/`](resources/public/): SPA root directory;
-[dev](#running-the-app) / [prod](#production) profile depends on the most recent build
-  - [`index.html`](resources/public/index.html): SPA home page
-    - Dynamic SPA content rendered in the following `div`:
-        ```html
-        <div id="app"></div>
-        ```
-    - Customizable; add headers, footers, links to other scripts and styles, etc.
-  - Generated directories and files
-    - Created on build with either the [dev](#running-the-app) or [prod](#production) profile
-    - `js/compiled/`: compiled CLJS (`shadow-cljs`)
-      - Not tracked in source control; see [`.gitignore`](.gitignore)
-* [`src/minddrop/`](src/minddrop/): SPA source files (ClojureScript,
-[re-frame](https://github.com/Day8/re-frame))
-  - [`core.cljs`](src/minddrop/core.cljs): contains the SPA entry point, `init`
-* [`.github/workflows/`](.github/workflows/): contains the
-[github actions](https://github.com/features/actions) pipelines.
-  - [`test.yaml`](.github/workflows/test.yaml): Pipeline for testing.
+The name Minddrop has two meanings behind it. The first comes from the idea of the mind as a fluid medium, akin to a cloud of water. The application will *drop* your ideas in front of you one by one, just as a pipette drops liquids. The application is intended to allow you to *drop* the effort of keeping track of your interests and actions. So go ahead—drop your mind.
 
-
-Custom formatters must be enabled in the browser before
-[CLJS DevTools](https://github.com/binaryage/cljs-devtools) can display ClojureScript data in the
-console in a more readable way.
+## Manifesto
+### Respect the Limits of Attention
+  Shows things to you one at a time. Skip as frequently as you would like.
+### Flow with You
+  The things you interact with more often will be presented to you first. This helps you continually engage with what matters most to you in the moment.
+### Nothing Lost
+  Minddrop ensures you see every drop in a particular source at least once before it begins again.
+### Ease of Navigation
+  Because not everything in your mind is immediately apparent at any given moment, Minddrop does it best to show you what you're looking for. You may browse through your drops via its built-in queueing system, or search them by name. A linking system will be implemented to facilitate categorization.
+### Remain Agnostic to Time
+  The data that you've provided to Minddrop only changes when you change it. Nothing is done without your confirmation.
+### Respect Privacy
+  Your data is yours and only yours, always. Minddrop can be used completely offline. This means while you are never exposed, you must manage it responsibly.
+### Organizational Freedom
+  You have your own unique way of thought, and Minddrop should allow you to organize your mind how you see fit.
