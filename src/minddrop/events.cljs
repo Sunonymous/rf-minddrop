@@ -70,6 +70,7 @@
 
 (rf/reg-event-db
  ::relabel-drop
+ [->local-storage]
  (fn [db [_ drop-id next-label]]
    (update-in db [:pool drop-id] drop/relabel next-label)))
 
