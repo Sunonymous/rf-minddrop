@@ -1,24 +1,64 @@
 (ns minddrop.events
   (:require
-   [re-frame.core :as rf]
-   [minddrop.db   :as db]
-   [cljs.reader :refer [read-string]]
-   [drop.core :as drop]
-   [pool.core :as pool]))
+   [cljs.reader        :refer [read-string]]
+   [clojure.spec.alpha :as s]
+   [drop.core          :as drop]
+   [pool.core          :as pool]
+   [re-frame.core      :as rf]
+   [minddrop.db        :as db]))
 
 ;;;;;;;;;;;;;;;;;;;
 ;; DB Validation ;
 
-;; TODO reimplement check and throw
+(defn check-and-throw
+  "Throws an exception if db doesn't match spec."
+  [spec db]
+  (when-not (s/valid? spec db)
+    (throw (ex-info (str "DB Change Failure: " (s/explain-str spec db)) {}))))
+
+(def check-db-change
+  (rf/after (partial check-and-throw ::minddrop.db/db)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; DB Initialization ;
 
-;; TODO reimplement local storage
+(def local-storage-key "minddrop_pool")
+
+(defn pool->local-storage
+  "Writes the given pool to local storage."
+  [db]
+  (let [json (pr-str (:pool db))]
+    (js/localStorage.setItem local-storage-key json)))
+
+(def ->local-storage (rf/after pool->local-storage))
+
+(rf/reg-cofx
+ :local-store
+ (fn [coeffects storage-key]
+   (assoc coeffects :local-store
+          (js->clj (.getItem js/localStorage storage-key)))))
+
+(rf/reg-event-fx
+ ::initialize-db
+ [(rf/inject-cofx :local-store local-storage-key)]
+ (fn [cofx _]
+   (let [initial-db     db/default-db
+         persisted-pool (read-string (:local-store cofx))]
+     (if (and persisted-pool
+              (s/valid? ::minddrop.db/pool persisted-pool))
+       (assoc cofx :db (assoc initial-db :pool persisted-pool))
+       (assoc cofx :db initial-db)))))
 
 (rf/reg-event-db
- ::initialize-db
-   (fn [_ _] db/default-db))
+ ::load-pool-from-string
+ (fn [db [_ str-data]]
+       (let [next-pool (read-string str-data)]
+         (if (and next-pool
+                  (s/valid? ::minddrop.db/pool next-pool))
+           (assoc db :pool next-pool)
+           (do
+             (js/alert "Invalid pool data.")
+             db)))))
 
 ;;;;;;;;;;;
 ;; Drop ;
@@ -43,16 +83,21 @@
 
 (rf/reg-event-db
  ::add-drop
+ [check-db-change
+  ->local-storage]
  (fn [db [_ new-drop]]
    (assoc-in db [:pool (:id new-drop)] new-drop)))
 
 (rf/reg-event-db
  ::remove-drop
+ [check-db-change]
  (fn [db [_ drop-id]]
    (update db :pool dissoc drop-id)))
 
 (rf/reg-event-db
  ::refresh-source
+ [check-db-change
+  ->local-storage]
  (fn [db [_ source-id]]
    (update db :pool (partial pool/refresh-source source-id))))
 
@@ -71,19 +116,10 @@
 
 (rf/reg-event-db
  ::unfocus-drop
- (fn [db [_ drop-id]] ;; TODO test this again
+ (fn [db [_ drop-id]]
    (update db :focused-ids #(remove #{drop-id} %))))
 
 (rf/reg-event-db
  ::rotate-focused-ids
  (fn [db [_]]
    (update db :focused-ids #(flatten (list (rest %) (first %))))))
-
-;;;;;;;;;;;
-;; Debug ;
-
-(rf/reg-event-db
- ::debug-set-pool
-     (fn [db [_ next-pool]]
-       (let [data (read-string next-pool)]
-         (assoc db :pool data))))
