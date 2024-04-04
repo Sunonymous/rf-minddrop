@@ -83,7 +83,6 @@
   [drop-id]
   (let [pool        (rf/subscribe [::subs/pool])
         notes-open? (reagent/atom false)
-        ;; TODO figure out why notes do not auto-populate
         live-notes  (reagent/atom (get-in @pool [drop-id :notes]))
         save-fn     (debounce (fn [_] (rf/dispatch-sync [::events/renote-drop drop-id @live-notes])
                                 (js/console.log "Notes Saved!")) 2500)]

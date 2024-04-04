@@ -27,7 +27,6 @@
                             (s/valid? ::id   id)
                             (s/valid? ::drop drop)))))
 ; DB-full
-;; TODO revise spec with new format
 (s/def ::db (s/keys :req-un [::source ::pool ::focused-ids]))
 
 ;;;;;;;;;;;;;;;;
