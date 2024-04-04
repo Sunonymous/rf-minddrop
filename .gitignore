@@ -30,7 +30,6 @@ docs/**/*.pdf
 docs/**/*.mobi
 build/
 *~
-/shadow-cljs.edn
 /.shadow-cljs/
 .shadow-cljs
 /site/
