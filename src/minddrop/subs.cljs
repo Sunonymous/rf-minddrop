@@ -7,6 +7,13 @@
  (fn [db] (:pool db)))
 
 (rf/reg-sub
+ ::drop
+ (fn [[_ drop-id]]
+   (rf/subscribe [::pool]))
+ (fn [pool [_ drop-id]]
+   (pool drop-id)))
+
+(rf/reg-sub
  ::source
  (fn [db] (:source db)))
 
