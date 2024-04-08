@@ -65,6 +65,7 @@
 
 (rf/reg-event-db
  ::touch-drop
+ [->local-storage]
  (fn [db [_ drop-id]]
    (update-in db [:pool drop-id] drop/touch)))
 
@@ -76,6 +77,7 @@
 
 (rf/reg-event-db
  ::renote-drop
+ [->local-storage]
  (fn [db [_ drop-id next-notes]]
    (update-in db [:pool drop-id] drop/renote next-notes)))
 
