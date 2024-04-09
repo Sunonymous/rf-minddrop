@@ -38,6 +38,16 @@
    (assoc coeffects :local-store
           (js->clj (.getItem js/localStorage storage-key)))))
 
+(rf/reg-event-db
+ ::rebuild-queue
+ (fn [db [_ filter-predicate]]
+   (update db :queue (fn [_] (pool/pool->queue filter-predicate (:pool db))))))
+
+(rf/reg-event-db
+ ::queue-forward
+ (fn [db]
+   (update db :queue #(into [] (rest %)))))
+
 (rf/reg-event-fx
  ::initialize-db
  [(rf/inject-cofx :local-store local-storage-key)]

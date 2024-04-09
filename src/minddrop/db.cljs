@@ -27,7 +27,7 @@
                             (s/valid? ::id   id)
                             (s/valid? ::drop drop)))))
 ; DB-full
-(s/def ::db (s/keys :req-un [::source ::pool ::focused-ids]))
+(s/def ::db (s/keys :req-un [::source ::pool ::focused-ids ::queue]))
 
 ;;;;;;;;;;;;;;;;
 ;; Default DB ;
@@ -39,4 +39,5 @@
                                     (constants :master-label)
                                     (constants :master-id)
                                     (constants :master-id))}
-   :focused-ids '()})
+   :focused-ids '()
+   :queue   []})

@@ -5,7 +5,8 @@
    [minddrop.events :as events]
    [minddrop.views  :as views]
    [minddrop.config :as config]
-   ))
+
+   [pool.core :as pool]))
 
 
 (defn dev-setup []
@@ -20,5 +21,6 @@
 
 (defn init []
   (re-frame/dispatch-sync [::events/initialize-db])
+  (re-frame/dispatch-sync [::events/rebuild-queue (pool/pool-filters->predicate views/default-pool-filters)])
   (dev-setup)
   (mount-root))

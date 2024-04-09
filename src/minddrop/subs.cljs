@@ -18,6 +18,10 @@
  (fn [db] (:source db)))
 
 (rf/reg-sub
+ ::queue
+ (fn [db] (:queue db)))
+
+(rf/reg-sub
  ::user
  (fn [db] (:user db)))
 
