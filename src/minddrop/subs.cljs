@@ -26,5 +26,12 @@
  (fn [db] (:user db)))
 
 (rf/reg-sub
+ ::first-in-queue
+ (fn []
+   (rf/subscribe [::queue]))
+ (fn [queue]
+   (first queue)))
+
+(rf/reg-sub
  ::focused-ids
  (fn [db] (:focused-ids db)))
