@@ -59,7 +59,7 @@
    :untouched -- true / false
    :source-id -- (optional) <source id>
    :label     -- substring included in label"
-  [filters focused-ids]
+  [filters]
     (fn [drop]
       (and
        (not= (drop :id) (drop/constants :master-id))
