@@ -1,8 +1,3 @@
-body {
-    /* TODO remove; only because of vivaldi */
-    margin-left: 8px;
-}
-
 /* Remove default button styling */
 button.clean {
 	background: none;
@@ -19,32 +14,45 @@ button.clean {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    height: 90vh;
+    height: 100vh;
     border: 2px solid black;
 }
 
-#queue-controls {
-    display: flex;
-    justify-content: space-between;
-    border: 2px solid purple;
+#filter_drawer_button {
+    position: fixed;
+    top: 50%;
+    left: 24px;
+    font-size: 2rem;
+    transform: translateY(-100%);
+    border: none;
 }
 
-#source-details {
+#position_banner::before {
+    content: "—";
+}
+
+#position_banner {
+    padding: 0.5em 1em;
     display: flex;
     gap: 8px;
     align-items: center;
+    background-color: aliceblue;
+    border-top: 1px solid black;
+    user-select: none;
 }
 
-#source-buttons {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-#drop-controls {
+#navigation_controls {
+    position: relative;
+    top: 1px;
+    right: 0px;
+    margin-inline: auto;
     display: flex;
     justify-content: center;
     gap: 16px;
+    border: 2px solid black;
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    background-color: white;
 }
 
 #drop-display {
@@ -58,25 +66,9 @@ button.clean {
     /* border: 2px solid goldenrod; */
 }
 
-#drop-header {
-    display: flex;
-    gap: 8px;
-}
-
 #no-drops {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-}
-
-#drop-note-toggle {
-    transition: transform 0.5s;
-}
-#drop-note-toggle.open {
-    transform: rotate(180deg);
-}
-
-.drop-indicator {
-    font-size: 12px;
 }

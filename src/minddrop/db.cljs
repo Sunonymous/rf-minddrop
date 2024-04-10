@@ -18,7 +18,12 @@
 ; Drop-full
 (s/def ::drop (s/keys :req-un
                       [::id ::label ::source ::resonance
-                       ::notes ::links ::touched]))
+                       ::notes ::links ::focused ::touched]))
+
+; View Parameters
+(s/def ::focused boolean?)
+(s/def ::untouched boolean?)
+(s/def ::view-params (s/keys :req-un [::source ::focused ::untouched ::label]))
 
 ; DB
 (s/def ::focused-ids list?)
@@ -27,17 +32,22 @@
                             (s/valid? ::id   id)
                             (s/valid? ::drop drop)))))
 ; DB-full
-(s/def ::db (s/keys :req-un [::source ::pool ::focused-ids ::queue]))
+(s/def ::db (s/keys :req-un [::pool ::view-params]))
 
-;;;;;;;;;;;;;;;;
-;; Default DB ;
+;;;;;;;;;;;;;;
+;; Defaults ;
+
+;; Default Search Parameters
+(def default-view-params
+  {:source    (constants :master-id)
+   :focused   false
+   :untouched true
+   :label     ""})
 
 (def default-db
   {:user   "me"
-   :source  (constants :master-id)
    :pool   {(constants :master-id) (new-drop
                                     (constants :master-label)
                                     (constants :master-id)
                                     (constants :master-id))}
-   :focused-ids '()
-   :queue   []})
+   :view-params default-view-params})

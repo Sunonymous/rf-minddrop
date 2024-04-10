@@ -15,6 +15,7 @@
    :label      label
    :source     source-id
    :resonance  (constants :initial-resonance)
+   :focused    false
    :notes      ""
    :links      #{}
    :touched    false})
@@ -43,6 +44,8 @@
    (not (:touched drop)))
 
 (def touched? (complement untouched?))
+
+(defn is-focused? [drop] (:focused drop))
 
 (defn label-includes?
   "True if a drop's label includes a certain substring.

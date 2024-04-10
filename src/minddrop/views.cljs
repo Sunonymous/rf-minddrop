@@ -1,29 +1,33 @@
 (ns minddrop.views
   (:require
    ;; Material UI
-   [reagent-mui.material.text-field        :refer [text-field]]
-   [reagent-mui.material.icon-button       :refer [icon-button]]
-   [reagent-mui.material.card              :refer [card]]
-   [reagent-mui.material.card-header       :refer [card-header]]
-   [reagent-mui.material.card-content      :refer [card-content]]
-   [reagent-mui.material.card-actions      :refer [card-actions]]
-   [reagent-mui.material.accordion         :refer [accordion]]
-   [reagent-mui.material.accordion-summary :refer [accordion-summary]]
-   [reagent-mui.material.accordion-details :refer [accordion-details]]
+   [reagent-mui.material.text-field          :refer [text-field]]
+   [reagent-mui.material.icon-button         :refer [icon-button]]
+   [reagent-mui.material.card                :refer [card]]
+   [reagent-mui.material.card-actions        :refer [card-actions]]
+   [reagent-mui.material.accordion           :refer [accordion]]
+   [reagent-mui.material.accordion-summary   :refer [accordion-summary]]
+   [reagent-mui.material.accordion-details   :refer [accordion-details]]
+   [reagent-mui.material.drawer              :refer [drawer]]
+   [reagent-mui.material.form-control-label  :refer [form-control-label]]
+   [reagent-mui.material.switch              :refer [switch]]
    ;; MUI Icons
-   [reagent-mui.icons.add                 :refer [add]]
-   [reagent-mui.icons.delete              :refer [delete]]
-   [reagent-mui.icons.edit                :refer [edit]]
-   [reagent-mui.icons.expand-more         :refer [expand-more]]
-   [reagent-mui.icons.visibility          :refer [visibility]]
-   [reagent-mui.icons.visibility-off      :refer [visibility-off]]
-   [reagent-mui.icons.visibility-off-outlined      :refer [visibility-off-outlined]]
-   [reagent-mui.icons.zoom-in             :refer [zoom-in]]
-   [reagent-mui.icons.zoom-out            :refer [zoom-out]]
-   [reagent-mui.icons.arrow-right-alt     :refer [arrow-right-alt]]
-   [reagent-mui.icons.autorenew-outlined  :refer [autorenew-outlined]]
+   [reagent-mui.icons.add                     :refer [add]]
+   [reagent-mui.icons.delete                  :refer [delete]]
+   [reagent-mui.icons.edit                    :refer [edit]]
+   [reagent-mui.icons.expand-more             :refer [expand-more]]
+   [reagent-mui.icons.visibility              :refer [visibility]]
+   [reagent-mui.icons.visibility-off          :refer [visibility-off]]
+   [reagent-mui.icons.visibility-off-outlined :refer [visibility-off-outlined]]
+   [reagent-mui.icons.zoom-in                 :refer [zoom-in]]
+   [reagent-mui.icons.zoom-out                :refer [zoom-out]]
+   [reagent-mui.icons.arrow-right-alt         :refer [arrow-right-alt]]
+   [reagent-mui.icons.autorenew-outlined      :refer [autorenew-outlined]]
+   [reagent-mui.icons.notes                   :refer [notes]]
+   [reagent-mui.icons.save                    :refer [save]]
+   [reagent-mui.icons.close                   :refer [close]]
+   [reagent-mui.icons.close-outlined          :refer [close-outlined]]
    ;; Minddrop
-   [goog.functions  :refer [debounce]]
    [minddrop.config :as config]
    [minddrop.events :as events]
    [minddrop.subs   :as subs]
@@ -33,23 +37,28 @@
    [re-frame.core   :as rf]
    [reagent.core :as r]))
 
+
 ;;;;;;;;;;;;;;;;;
 ;; Local State ;
-
-;; Focus mode shows users only the drops that are currently focused.
-;; Because this is local state, it resets upon reload.
-(defonce focus-mode? (r/atom false))
-(defn toggle-focus-mode! [] (swap! focus-mode? not))
 
 ;; Pool Filters
 ;; Users can filter drops by label.
 (defonce label-query (r/atom ""))
-(defn update-label-query! [event]
-  (reset! label-query (-> event .-target .-value)))
 
 ;; These searches may be within a particular source drop or the full pool.
+;; TODO these are shadowed by locals within the filter drawer... check on that!
 (defonce search-by-source? (r/atom true))
 (defn toggle-search-scope! [] (swap! search-by-source? not))
+;; (defn search-local!)
+
+;; Open/Close Filter Drawer
+(defonce filter-drawer-open? (r/atom false))
+(defn toggle-filter-drawer! [] (swap! filter-drawer-open? not))
+
+;; Are drop notes being edited?
+(defonce editing-notes? (r/atom false))
+(defn toggle-note-edit! [] (swap! editing-notes? not))
+(defn stop-editing-notes! [] (reset! editing-notes? false))
 
 ;;;;;;;;;;;;;;;;;;;;
 ;; Action Buttons ;
@@ -62,9 +71,11 @@
                       next-drop (drop/new-drop label next-id source)]
                   (when (seq label)
                     (rf/dispatch [::events/add-drop next-drop]))))
+    :disabled @(rf/subscribe [::subs/focus-mode])
     :aria-label "add new drop"}
    [add {:font-size "large"}]])
 
+;; TODO why this this a function-2 component?
 (defn delete-drop-btn
   [drop-id]
   (let [pool   (rf/subscribe [::subs/pool])
@@ -88,142 +99,234 @@
 ;;;;;;;;;;;;;;;
 ;; Open Drop ;
 
-(defn open-drop-display
-  [drop-id is-focused?]
-  (let [pool        (rf/subscribe [::subs/pool])
-        focused-ids (rf/subscribe [::subs/focused-ids])
-        live-notes  (r/atom (get-in @pool [drop-id :notes]))
-        _ (js/console.log "drop-id given to open drop display: " drop-id)
-        save-fn     (debounce (fn [_] (rf/dispatch-sync [::events/renote-drop drop-id @live-notes])
-                                (js/console.log "Notes Saved!")) 2500)]
-    (fn [drop-id is-focused?]
-      (let [drop (@pool (if @focus-mode? (first @focused-ids) drop-id))
-            child-count (count (pool/immediate-children drop-id @pool))]
-        (if @focus-mode?
-          ;; Focused Drop
-          [card {:variant "outlined"
-                 :sx {:min-width "275px"}}
-           [card-header {:title (:label drop)}]
-           [card-content
-            [text-field
-             {:placeholder "Notes"
-              :multiline true
-              :value @live-notes
-              :on-input (fn [e] (save-fn)
-                          (reset! live-notes (-> e .-target .-value)))}]]]
-          ;; Unfocused Drop
-          [card
-           {:variant "outlined"
-            :sx {:min-width "275px"
-                 :max-width "75%"}}
-           [accordion
-            [accordion-summary
-             {:expand-icon (r/as-element [expand-more])}
-             (:label drop)
-             [:p.drop-indicator (repeat child-count "• ")]]
-            [accordion-details
-             (if (seq (:notes drop))
-               (:notes drop)
-               [:p "(no notes)"])]
-            [card-actions
-             [delete-drop-btn drop-id]
-             [icon-button
-              {:on-click #(rf/dispatch [(if is-focused?
-                                          ::events/unfocus-drop
-                                          ::events/focus-drop) drop-id])
-               :size "small"}
-              (if is-focused?
-                [visibility]
-                [visibility-off-outlined])]
-             [icon-button
-              {:on-click (fn [_]
-                           (let [next-label (util/prompt-string "New label?")]
-                             (when (seq next-label)
-                               (rf/dispatch [::events/relabel-drop drop-id next-label]))))
-               :size "small"}
-              [edit]]]]
-           ])
+(defn drop-note-editor
+  [txt save-fn]
+  (let [live-notes (r/atom txt)]
+    (fn [txt save-fn]
+      [:div {:style {:display "flex"
+                     :flex-direction "column"
+                     :align-items "center"}}
+       [text-field
+        {:placeholder "(Notes)"
+         :multiline   true
+         :value       @live-notes
+         :on-input    #(reset! live-notes (-> % .-target .-value))}]
+       [:div {:style {:margin "0.25em" :padding "1em"
+                      :border-bottom "1px solid black"}}
+        [icon-button
+         {:on-click (fn [_] (save-fn @live-notes) (toggle-note-edit!))
+          :size "small"
+          :aria-label "save notes"}
+         [save]]
+        [icon-button
+         {:on-click toggle-note-edit!
+          :size "small"
+          :aria-label "cancel editing notes"}
+         [close]]]])))
 
-         ))))
+(defn drop-notes-display
+  [drop-id]
+  (let [drop       @(rf/subscribe [::subs/drop drop-id])
+        save-notes-fn #(rf/dispatch [::events/renote-drop (drop :id) %])]
+    (if @editing-notes?
+      [drop-note-editor (drop :notes) save-notes-fn]
+      [:p (drop :notes)])))
+
+(defn toggle-focused-view-button
+  []
+  (let [is-focused? (:focused @(rf/subscribe [::subs/view-params]))]
+    [icon-button
+     {:on-click #(rf/dispatch [::events/update-view-params :focused (not is-focused?)])
+      :size "medium"
+      :aria-label "toggle focus mode"}
+     (if is-focused?
+       [visibility {:font-size "large"}]
+       [visibility-off-outlined {:font-size "large"}])]))
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Major Components ;
+
+(defn filter-drawer
+  "This collapsible drawer allows the user to edit
+   the parameters with which drops are filtered."
+  []
+  (let [source           @(rf/subscribe [::subs/source])
+        search-by-source? (r/atom true)
+        toggle-search-scope! #(swap! search-by-source? not)]
+    (fn []
+      [drawer {:open @filter-drawer-open? :on-close toggle-filter-drawer!}
+       [:form {:style {:margin-top "auto"
+                       :margin-bottom "auto"
+                       :padding "4rem"}}
+        [:h2  "Drop Filters"]
+        [form-control-label
+         {:label "Focused Drops Only"
+          :control (r/as-element [switch])
+          :checked (:focused @(rf/subscribe [::subs/view-params]))
+          :label-placement "start"
+          :on-change #(rf/dispatch [::events/update-view-params :focused (-> % .-target .-checked)])}]
+        [:br]
+        [form-control-label
+         {:label "Search All Drops"
+          :control (r/as-element [switch])
+          :disabled (not (seq @label-query))
+          :checked (not @search-by-source?)
+          :label-placement "start"
+          :on-change (fn [_]
+                       (toggle-search-scope!)
+                       (rf/dispatch [::events/update-view-params :source (if @search-by-source?
+                                                                           (drop/constants :master-id)
+                                                                           nil)]))}]
+        [:br] ;; TODO the components on both sides of this BR are extremely coupled
+        [text-field
+         {:label "Drop Label Contains:"
+          :size  "small"
+          :sx {:margin-top "0.5em"}
+          :value @label-query
+          :on-change (fn [e]
+                       (let [next-val (-> e .-target .-value)]
+                         (rf/dispatch [::events/update-view-params :label (-> e .-target .-value)])
+                         (reset! label-query (-> e .-target .-value))
+                         (when (not (seq next-val))
+                           (toggle-search-scope!)
+                           (rf/dispatch [::events/update-view-params :source (drop/constants :master-id)]))))}]]
+       [icon-button
+        {:sx {:margin-inline "auto"
+              :margin-bottom "24px"
+              :width "fit-content"}
+         :on-click toggle-filter-drawer!}
+        [close-outlined]]])))
+
+(defn no-drop-available
+  "Displays when no drop is visible for interaction."
+  []
+  (let [source @(rf/subscribe [::subs/source])]
+    [:div#no-drops
+     (cond
+       (pool/source-needs-refresh? source @(rf/subscribe [::subs/pool]))
+       [icon-button
+        {:on-click #(rf/dispatch [::events/refresh-source source])
+         :aria-label "refresh drops in source"}
+        [autorenew-outlined {:font-size "large"}]]
+
+       (@(rf/subscribe [::subs/view-params]) :focused)
+       (if (pos? (count @(rf/subscribe [::subs/focused-drops])))
+         [icon-button
+          {:on-click #(rf/dispatch [::events/refresh-focused-drops])
+           :aria-label "refresh focused drops"}
+          [autorenew-outlined {:font-size "large"}]]
+         [:p "No drops are focused or nothing matches your search."])
+
+       :otherwise
+       [:p "No drop to display!"])]))
+
+(defn open-drop-card
+  []
+  (let [drop @(rf/subscribe [::subs/drop @(rf/subscribe [::subs/first-in-queue])])]
+      [card
+       {:variant "outlined"
+        :sx {:min-width "275px"
+             :max-width "75%"}}
+       [accordion
+        [accordion-summary
+         {:expand-icon (r/as-element [expand-more])}
+         [:h4 (str (:label drop))]]
+        [accordion-details
+         [drop-notes-display (:id drop)]]
+        [card-actions
+         [delete-drop-btn (:id drop)]
+         [icon-button
+          {:on-click #(rf/dispatch [::events/toggle-drop-focus (drop :id)])
+           :size "small"}
+          (if (:focused drop)
+            [visibility]
+            [visibility-off-outlined])]
+         [icon-button
+          {:on-click (fn [_]
+                       (let [next-label (util/prompt-string "New label?")]
+                         (when (seq next-label)
+                           (rf/dispatch [::events/relabel-drop (:id drop) next-label]))))
+           :size "small"}
+          [edit]]
+         (when (not @editing-notes?)
+           [icon-button
+            {:on-click toggle-note-edit!
+             :size "small"}
+            (if @editing-notes?
+              [save]
+              [notes])])
+         ]]]))
+
+(defn navigation-controls
+  "Allows the user to navigate their pool of drops
+   or add a new drop."
+  []
+  (let [source     @(rf/subscribe [::subs/source])
+        drop-id    @(rf/subscribe [::subs/first-in-queue])]
+    [:div#navigation_controls
+     [icon-button
+      {:on-click #(rf/dispatch [::events/update-view-params :source (:source (@(rf/subscribe [::subs/pool]) source))])
+       :disabled (or
+                  @(rf/subscribe [::subs/focus-mode])
+                  (= source (drop/constants :master-id)))
+       :aria-label "exit drop"}
+      [zoom-out {:font-size "large"}]]
+     [add-drop-btn @(rf/subscribe [::subs/next-id]) source]
+     [icon-button
+      {:on-click (fn [] (stop-editing-notes!)
+                   (rf/dispatch [::events/touch-drop drop-id]))
+       :disabled (not drop-id)
+       :aria-label "skip to next drop"}
+      [arrow-right-alt {:font-size "large"}]]
+     [icon-button {:on-click #(rf/dispatch [::events/update-view-params :source drop-id])
+                   :size "large"
+                   :disabled (or
+                              (not drop-id)
+                              @(rf/subscribe [::subs/focus-mode]))
+                   :aria-label "enter drop"}
+      [zoom-in {:font-size "large"}]]]))
+
+(defn banner-source
+  [source-id]
+  [:h2 (let [focused?  @(rf/subscribe [::subs/focus-mode])
+             searching? (seq @label-query)
+             global-search? (nil? source-id)]
+         (cond
+           (and focused? searching?) "Focused Drop Search"
+           focused?                  "Focused Drops"
+           searching?                "Search Results"
+           global-search?            "Global Search"
+           :otherwise                (:label @(rf/subscribe [::subs/drop source-id]))))])
+
+(defn position-banner
+  "Displays the current position in the pool.
+   Shows the source, the open drop, and the
+   number of drops both in the queue and nested
+   inside the open drop."
+  []
+  (let [source     @(rf/subscribe [::subs/source])
+        drop-id    @(rf/subscribe [::subs/first-in-queue])
+        child-count (count (pool/immediate-children drop-id @(rf/subscribe [::subs/pool])))]
+    [:div#position_banner
+     [banner-source source]
+     [:h4.drop-indicator
+      {:style {:font-size "1rem"}}
+      (when drop-id (apply str "⟶  " (repeat (count @(rf/subscribe [::subs/queue])) "🌢 ")))
+      (:label @(rf/subscribe [::subs/drop drop-id]))
+      (when (pos? child-count) (apply str " ⟶  " (repeat child-count "• ")))]]))
 
 ;;;;;;;;;
 ;; App ;
 
-(defn main-panel []
-  (let [pool        (rf/subscribe [::subs/pool])
-        source      (rf/subscribe [::subs/source])
-        focused-ids (rf/subscribe [::subs/focused-ids])
-        user        (rf/subscribe [::subs/user])
-        queue-pred  (pool/pool-filters->predicate
-                     {:source (if @search-by-source?
-                                @source
-                                nil)
-                      :focused @focus-mode?
-                      :untouched (not @focus-mode?)
-                      :label @label-query}
-                     @focused-ids)
-        queue       (if @focus-mode?
-                      (vec @focused-ids)
-                      (pool/pool->queue queue-pred @pool))
-        open-drop   (@pool (first queue))
-        open-id     (when open-drop (:id open-drop))]
+(defn minddrop []
+  (let [drop-id     @(rf/subscribe [::subs/first-in-queue])]
     [:div#minddrop
-;; Source Parameters
      [:div#queue-controls
-      [:div#source-details
-       [:h2 (if @focus-mode?
-              "( focused )"
-              (:label (@pool @source)))]
-       [:p.drop-indicator (repeat (count queue) "🌢 ")]]
-      (when (not @focus-mode?)
-        [:div
-         [:input {:type "text" :placeholder "Label Contains:"
-                  :on-change update-label-query!}]
-         [:button {:on-click toggle-search-scope!}
-          (str "Search " (if @search-by-source? "In Source" "All"))]])
-        [icon-button
-         {:on-click toggle-focus-mode!
-          :color (if @focus-mode? "primary" "secondary")
-          :size "large"
-          :disabled (not (seq @focused-ids))
-          :aria-label "toggle focus mode"}
-         (if @focus-mode?
-           [visibility {:font-size "large"}]
-           [visibility-off-outlined {:font-size "large"}])]]
-;; Open Drop Display
+      [:button#filter_drawer_button.clean {:on-click toggle-filter-drawer!} "➤"]
+      [filter-drawer]]
      [:div#drop-display
-      (if open-drop
-        [open-drop-display open-id
-         (some #{open-id} @focused-ids)]
-        [:div#no-drops
-         (if (pool/source-needs-refresh? @source @pool)
-           [icon-button
-            {:on-click #(rf/dispatch [::events/refresh-source @source])
-             :aria-label "refresh drops"}
-            [autorenew-outlined {:font-size "large"}]]
-           [:p "No drop to display!"]
-           )])]
-;; Drop Controls
-       [:div#drop-controls
-        (when (not @focus-mode?) ;; don't change source when focused
-          [icon-button
-           {:on-click #(rf/dispatch [::events/enter-drop (:source (@pool @source))])
-            :disabled (= @source (drop/constants :master-id))
-            :aria-label "exit drop"}
-           [zoom-out {:font-size "large"}]])
-        [add-drop-btn (pool/next-id @pool) @source]
-        [icon-button
-         {:on-click (if @focus-mode?
-                      #(rf/dispatch [::events/rotate-focused-ids])
-                      #(rf/dispatch [::events/touch-drop open-id]))
-          :disabled (if @focus-mode?
-                      (>= 1 (count @focused-ids))
-                      (not open-drop))
-          :aria-label "skip to next drop"}
-         [arrow-right-alt {:font-size "large"}]]
-        (when (not @focus-mode?)
-          [icon-button {:on-click #(rf/dispatch [::events/enter-drop open-id])
-                        :size "large"
-                        :disabled (not open-drop)
-                        :aria-label "enter drop"}
-           [zoom-in {:font-size "large"}]])]]))
+      (if drop-id
+        [open-drop-card]
+        [no-drop-available])]
+     [navigation-controls]
+     [position-banner]]))

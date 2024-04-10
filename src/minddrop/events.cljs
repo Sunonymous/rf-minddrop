@@ -19,6 +19,14 @@
 (def check-db-change
   (rf/after (partial check-and-throw ::minddrop.db/db)))
 
+;;;;;;;;;;;;;;;;;;;;;
+;; View Parameters ;
+
+(rf/reg-event-db
+ ::update-view-params
+ (fn [db [_ param next-val]]
+   (assoc-in db [:view-params param] next-val)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; DB Initialization ;
 
@@ -114,6 +122,12 @@
  (fn [db [_ source-id]]
    (update db :pool (partial pool/refresh-source source-id))))
 
+(rf/reg-event-db
+ ::refresh-focused-drops
+ [check-db-change]
+ (fn [db]
+   (update db :pool (partial pool/do-to-drops drop/untouch #(drop/is-focused? %)))))
+
 ;;;;;;;;
 ;; DB ;
 
@@ -123,14 +137,9 @@
    (assoc db :source drop-id)))
 
 (rf/reg-event-db
- ::focus-drop
+ ::toggle-drop-focus
  (fn [db [_ drop-id]]
-   (update db :focused-ids conj drop-id)))
-
-(rf/reg-event-db
- ::unfocus-drop
- (fn [db [_ drop-id]]
-   (update db :focused-ids #(remove #{drop-id} %))))
+   (update-in db [:pool drop-id :focused] not)))
 
 (rf/reg-event-db
  ::rotate-focused-ids
