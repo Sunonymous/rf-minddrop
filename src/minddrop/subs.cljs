@@ -63,3 +63,13 @@
         (filter (fn [[id drop]] (drop/is-focused? drop)))
         (map first)
         vec)))
+
+;; Provides a set of all the links contained throughout the pool.
+(rf/reg-sub
+ ::all-drop-links
+ (fn [] (rf/subscribe [::pool]))
+ (fn [pool] (->> (map (fn [[_ drop]] (:links drop)) pool)
+                 (remove empty?)
+                 (map vec)
+                 flatten
+                 set)))
