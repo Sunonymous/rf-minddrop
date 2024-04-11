@@ -30,6 +30,7 @@
    [reagent-mui.icons.close-outlined          :refer [close-outlined]]
    [reagent-mui.icons.backspace               :refer [backspace]]
    ;; Minddrop
+   [modals.views    :as modals]
    [minddrop.config :as config]
    [minddrop.events :as events]
    [minddrop.subs   :as subs]
@@ -38,7 +39,6 @@
    [drop.core       :as drop]
    [re-frame.core   :as rf]
    [reagent.core :as r]))
-
 
 ;;;;;;;;;;;;;;;;;
 ;; Local State ;
@@ -63,18 +63,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;
 ;; Action Buttons ;
-
-(defn add-drop-btn
-  [next-id source]
-  [icon-button
-   {:on-click (fn [_]
-                (let [label (util/prompt-string "Drop Label:")
-                      next-drop (drop/new-drop label next-id source)]
-                  (when (seq label)
-                    (rf/dispatch [::events/add-drop next-drop]))))
-    :disabled @(rf/subscribe [::subs/focus-mode])
-    :aria-label "add new drop"}
-   [add {:font-size "large"}]])
 
 ;; TODO why this this a function-2 component?
 (defn delete-drop-btn
@@ -293,7 +281,7 @@
                   (= source (drop/constants :master-id)))
        :aria-label "exit drop"}
       [zoom-out {:font-size "large"}]]
-     [add-drop-btn @(rf/subscribe [::subs/next-id]) source]
+     [modals/add-drop-dialog]
      [icon-button
       {:on-click (fn [] (stop-editing-notes!)
                    (rf/dispatch [::events/touch-drop drop-id]))
