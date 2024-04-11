@@ -44,8 +44,7 @@
 ;; Local State ;
 
 ;; Pool Filters
-;; Users can filter drops by label.
-(defonce label-query (r/atom ""))
+;; Users can filter drops by label.(defonce label-query (r/atom ""))
 
 ;; These searches may be within a particular source drop or the full pool.
 ;; TODO these are shadowed by locals within the filter drawer... check on that!
@@ -116,7 +115,9 @@
        [:div {:style {:margin "0.25em" :padding "1em"
                       :border-bottom "1px solid black"}}
         [icon-button
-         {:on-click (fn [_] (save-fn @live-notes) (toggle-note-edit!))
+         {:on-click (fn [_]
+                      (save-fn @live-notes)
+                      (toggle-note-edit!))
           :size "small"
           :aria-label "save notes"}
          [save]]
@@ -129,11 +130,14 @@
 (defn drop-notes-display
   [drop-id]
   (let [drop       @(rf/subscribe [::subs/drop drop-id])
-        save-notes-fn #(rf/dispatch [::events/renote-drop (drop :id) %])]
+        save-notes-fn (fn [next-notes]
+                        (rf/dispatch [::events/resonate-drop (drop :id) (drop/constants :notes-boost)])
+                        (rf/dispatch [::events/renote-drop   (drop :id) next-notes]))]
     (if @editing-notes?
       [drop-note-editor (drop :notes) save-notes-fn]
       [:p (drop :notes)])))
 
+;; TODO remove this unused button
 (defn toggle-focused-view-button
   []
   (let [is-focused? (:focused @(rf/subscribe [::subs/view-params]))]
@@ -152,9 +156,7 @@
   "This collapsible drawer allows the user to edit
    the parameters with which drops are filtered."
   []
-  (let [source         @(rf/subscribe [::subs/source])
-        stop-searching! (fn [_]
-                          (reset! label-query "")
+  (let [stop-searching! (fn [_]
                           (rf/dispatch [::events/update-view-params :source (drop/constants :master-id)])
                           (rf/dispatch [::events/update-view-params :label ""])
                           (search-local!))]
@@ -170,36 +172,36 @@
           :checked (:focused @(rf/subscribe [::subs/view-params]))
           :label-placement "start"
           :on-change #(rf/dispatch [::events/update-view-params :focused (-> % .-target .-checked)])}]
-        [:br]
-        [form-control-label
-         {:label "Search All Drops"
-          :control (r/as-element [switch])
-          :disabled (not (seq @label-query))
-          :checked (not @search-by-source?)
-          :label-placement "start"
-          :on-change (fn [_]
-                       (toggle-search-scope!)
-                       (rf/dispatch [::events/update-view-params :source (if @search-by-source?
-                                                                           (drop/constants :master-id)
-                                                                           nil)]))}]
-        [:br] ;; TODO the components on both sides of this BR are extremely coupled
-        [:div {:style {:display "flex" :align-items "center"}}
-         [text-field
-          {:label "Drop Label Contains:"
-           :size  "small"
-           :sx {:margin-top "0.5em"}
-           :value @label-query
-           :on-change (fn [e]
-                        (let [next-val (-> e .-target .-value)]
-                          (rf/dispatch [::events/update-view-params :label (-> e .-target .-value)])
-                          (reset! label-query (-> e .-target .-value))
-                          (when (not (seq next-val))
-                            (stop-searching! e))))}]
-
-         [button ;; nudge the button into place
-          {:style {:position "relative" :top "0.2em"}
-           :on-click stop-searching!}
-          [backspace]]]]
+          [:br]
+          [form-control-label
+           {:label "Search All Drops"
+            :control (r/as-element [switch])
+            :disabled (not (seq (:label @(rf/subscribe [::subs/view-params]))))
+            :checked (not @search-by-source?)
+            :label-placement "start"
+            :on-change (fn [_]
+                         (toggle-search-scope!)
+                         (rf/dispatch [::events/update-view-params :source (if @search-by-source?
+                                                                             (drop/constants :master-id)
+                                                                             nil)]))}]
+          [:br] ;; TODO the components on both sides of this BR are extremely coupled
+          [:div {:style {:display "flex" :align-items "center"}}
+           [text-field
+            {:label "Drop Label Contains:"
+             :size  "small"
+             :sx {:margin-top "0.5em"}
+             :value (:label @(rf/subscribe [::subs/view-params]))
+             :on-change (fn [e]
+                          (let [next-val (-> e .-target .-value)]
+                            (rf/dispatch [::events/update-view-params :label next-val])
+                            (when (not (seq next-val))
+                              (stop-searching! e))))}]
+           [button ;; nudge the button into place
+            {:style {:position "relative" :top "0.2em"}
+             :on-click stop-searching!
+             :aria-label "clear search"}
+            [backspace]]]
+        ]
        [icon-button
         {:sx {:margin-inline "auto"
               :margin-bottom "24px"
@@ -246,7 +248,9 @@
         [card-actions
          [delete-drop-btn (:id drop)]
          [icon-button
-          {:on-click #(rf/dispatch [::events/toggle-drop-focus (drop :id)])
+          {:on-click (fn [_]
+                       (rf/dispatch [::events/toggle-drop-focus (drop :id)])
+                       (rf/dispatch [::events/resonate-drop (drop :id) (drop/constants :focus-boost)]))
            :size "small"}
           (if (:focused drop)
             [visibility]
@@ -299,7 +303,7 @@
 (defn banner-source
   [source-id]
   [:h2 (let [focused?  @(rf/subscribe [::subs/focus-mode])
-             searching? (seq @label-query)
+             searching? (seq (:label @(rf/subscribe [::subs/view-params])))
              global-search? (nil? source-id)]
          (cond
            (and focused? searching?) "Focused Drop Search"
