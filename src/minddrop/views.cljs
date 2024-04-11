@@ -172,36 +172,44 @@
           :checked (:focused @(rf/subscribe [::subs/view-params]))
           :label-placement "start"
           :on-change #(rf/dispatch [::events/update-view-params :focused (-> % .-target .-checked)])}]
-          [:br]
-          [form-control-label
-           {:label "Search All Drops"
-            :control (r/as-element [switch])
-            :disabled (not (seq (:label @(rf/subscribe [::subs/view-params]))))
-            :checked (not @search-by-source?)
-            :label-placement "start"
-            :on-change (fn [_]
-                         (toggle-search-scope!)
-                         (rf/dispatch [::events/update-view-params :source (if @search-by-source?
-                                                                             (drop/constants :master-id)
-                                                                             nil)]))}]
-          [:br] ;; TODO the components on both sides of this BR are extremely coupled
-          [:div {:style {:display "flex" :align-items "center"}}
-           [text-field
-            {:label "Drop Label Contains:"
-             :size  "small"
-             :sx {:margin-top "0.5em"}
-             :value (:label @(rf/subscribe [::subs/view-params]))
-             :on-change (fn [e]
-                          (let [next-val (-> e .-target .-value)]
-                            (rf/dispatch [::events/update-view-params :label next-val])
-                            (when (not (seq next-val))
-                              (stop-searching! e))))}]
-           [button ;; nudge the button into place
-            {:style {:position "relative" :top "0.2em"}
-             :on-click stop-searching!
-             :aria-label "clear search"}
-            [backspace]]]
-        ]
+        [:br]
+        [button
+         {:sx {:margin "1em 0 1em 0"}
+          :variant "outlined"
+          :on-click #(rf/dispatch [::events/unfocus-all-drops])
+          :aria-label "unfocus all drops"}
+         "Unfocus All Drops"]
+        [:br]
+        [:hr]
+        [:br]
+        [form-control-label
+         {:label "Search All Drops"
+          :control (r/as-element [switch])
+          :disabled (not (seq (:label @(rf/subscribe [::subs/view-params]))))
+          :checked (not @search-by-source?)
+          :label-placement "start"
+          :on-change (fn [_]
+                       (toggle-search-scope!)
+                       (rf/dispatch [::events/update-view-params :source (if @search-by-source?
+                                                                           (drop/constants :master-id)
+                                                                           nil)]))}]
+        [:br] ;; TODO the components on both sides of this BR are extremely coupled
+        [:div {:style {:display "flex" :align-items "center"}}
+         [text-field
+          {:label "Drop Label Contains:"
+           :size  "small"
+           :sx {:margin-top "0.5em"}
+           :value (:label @(rf/subscribe [::subs/view-params]))
+           :on-change (fn [e]
+                        (let [next-val (-> e .-target .-value)]
+                          (rf/dispatch [::events/update-view-params :label next-val])
+                          (when (not (seq next-val))
+                            (stop-searching! e))))}]
+         [button ;; nudge the button into place
+          {:style {:position "relative" :top "0.2em"}
+           :on-click stop-searching!
+           :aria-label "clear search"}
+          [backspace]]]]
        [icon-button
         {:sx {:margin-inline "auto"
               :margin-bottom "24px"
