@@ -67,6 +67,7 @@
        (assoc cofx :db (assoc initial-db :pool persisted-pool))
        (assoc cofx :db initial-db)))))
 
+;; this was used to debug
 (rf/reg-event-db
  ::load-pool-from-string
  (fn [db [_ str-data]]
@@ -127,6 +128,13 @@
   ->local-storage]
  (fn [db [_ source-id]]
    (update db :pool (partial pool/refresh-source source-id))))
+
+(rf/reg-event-db
+ ::unfocus-all-drops
+ [check-db-change
+  ->local-storage]
+ (fn [db]
+   (update db :pool (partial pool/do-to-drops drop/unfocus drop/is-focused?))))
 
 (rf/reg-event-db
  ::refresh-focused-drops
