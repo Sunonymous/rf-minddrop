@@ -25,9 +25,10 @@
  ::queue
  (fn [] [(rf/subscribe [::pool])
          (rf/subscribe [::view-params])])
- (fn [[pool view-params]]
+ (fn [[pool view-params]] ;; always sorted by descending resonance
    (let [predicate (pool-filters->predicate view-params)]
-     (pool/pool->queue predicate pool))))
+     (sort-by (fn [id] (:resonance @(rf/subscribe [::drop id]))) >
+              (pool/pool->queue predicate pool)))))
 
 (rf/reg-sub
  ::next-id
