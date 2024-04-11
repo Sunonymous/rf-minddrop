@@ -125,18 +125,6 @@
       [drop-note-editor (drop :notes) save-notes-fn]
       [:p (drop :notes)])))
 
-;; TODO remove this unused button
-(defn toggle-focused-view-button
-  []
-  (let [is-focused? (:focused @(rf/subscribe [::subs/view-params]))]
-    [icon-button
-     {:on-click #(rf/dispatch [::events/update-view-params :focused (not is-focused?)])
-      :size "medium"
-      :aria-label "toggle focus mode"}
-     (if is-focused?
-       [visibility {:font-size "large"}]
-       [visibility-off-outlined {:font-size "large"}])]))
-
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Major Components ;
 
