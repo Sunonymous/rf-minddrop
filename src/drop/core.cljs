@@ -78,3 +78,7 @@
 ;; Boost a drop's resonance.
 (defn resonate [drop amount]
   (update drop :resonance + amount))
+
+;; Used primarily to reset focus filters.
+(defn unfocus [drop]
+  (assoc drop :focused false))
