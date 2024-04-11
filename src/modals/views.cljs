@@ -5,7 +5,7 @@
    [reagent-mui.material.button               :refer [button]]
    [reagent-mui.material.icon-button          :refer [icon-button]]
    [reagent-mui.material.dialog-title         :refer [dialog-title]]
-   [reagent-mui.material.dialog-actions        :refer [dialog-actions]]
+   [reagent-mui.material.dialog-actions       :refer [dialog-actions]]
    [reagent-mui.material.dialog-content       :refer [dialog-content]]
    [reagent-mui.material.dialog-content-text  :refer [dialog-content-text]]
    [reagent-mui.material.text-field           :refer [text-field]]
@@ -101,8 +101,9 @@
           [dialog-content
            [dialog-content-text "Your drop contains the following links:"]
            (for [link (:links drop)]
-             [button ^{:key link}
-              {:variant "outlined"
+             [button
+              {:key link
+               :variant "outlined"
                :sx    {:display "inline-block"
                        :margin  "4px"
                        :padding "0.125em 0.5em"
@@ -129,11 +130,11 @@
              :on-change #(reset! link-to-add (-> % .-target .-value))}]
            [button
             {:sx {:position "relative" :top "0.25em" :left "0.5em"}
-             :variant "outlined"
-             :size    "small"
-             :align-self "center"
+             :variant    "outlined"
+             :size       "small"
              :aria-label (str "add link " @link-to-add " to drop")
-             :on-click (fn [_] (rf/dispatch [::events/link-drop (:id drop) @link-to-add])
+             :on-click (fn [_] (when (seq @link-to-add)
+                                 (rf/dispatch [::events/link-drop (:id drop) @link-to-add]))
                          (reset! link-to-add ""))}
             "Add"]
            [dialog-actions
