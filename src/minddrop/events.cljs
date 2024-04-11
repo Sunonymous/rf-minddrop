@@ -168,6 +168,7 @@
  (fn [db [_ drop-id]]
    (update-in db [:pool drop-id :focused] not)))
 
+;; TODO remove this when happy with focused drop functionality
 (rf/reg-event-db
  ::rotate-focused-ids
  (fn [db [_]]
