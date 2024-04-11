@@ -99,6 +99,12 @@
  (fn [db [_ drop-id next-notes]]
    (update-in db [:pool drop-id] drop/renote next-notes)))
 
+(rf/reg-event-db
+ ::resonate-drop
+ [->local-storage]
+ (fn [db [_ drop-id amount]]
+   (update-in db [:pool drop-id] drop/resonate amount)))
+
 ;;;;;;;;;;
 ;; Pool ;
 

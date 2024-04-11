@@ -5,7 +5,9 @@
 (def constants
   {:initial-resonance 0
    :master-id         1
-   :master-label      "All"})
+   :master-label      "All"
+   :focus-boost       0.15
+   :notes-boost       0.25})
 
 ;;;;;;;;;;;;;;;;;;;
 ;; Drop Creation ;
@@ -41,7 +43,7 @@
   ([source-id] (fn [drop] (has-source? source-id drop))))
 
 (defn untouched? [drop]
-   (not (:touched drop)))
+  (not (:touched drop)))
 
 (def touched? (complement untouched?))
 
@@ -65,9 +67,14 @@
 (defn untouch [drop]
   (assoc drop :touched false))
 
+;; Changes the label of a drop.
 (defn relabel [drop new-label]
   (assoc drop :label new-label))
 
+;; Set a drop's notes.
 (defn renote [drop next-notes]
   (assoc drop :notes next-notes))
 
+;; Boost a drop's resonance.
+(defn resonate [drop amount]
+  (update drop :resonance + amount))
