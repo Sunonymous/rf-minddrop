@@ -250,9 +250,8 @@
            [icon-button
             {:on-click toggle-note-edit!
              :size "small"}
-            (if @editing-notes?
-              [save]
-              [notes])])
+            [notes]])
+         [modals/drop-link-dialog]
          ]]]))
 
 (defn navigation-controls
