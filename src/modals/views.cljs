@@ -24,20 +24,20 @@
 ;; This file contains hiccup for particular dialogs and modals
 ;; that the user needs to interact with.
 
-(defn add-drop-dialog
-  []
+(defn add-drop-dialog []
   (let [open?          (r/atom false)
         toggle-modal! #(swap! open? not)
         new-label      (r/atom "")
         close-modal!   (fn [] (reset! open? false)
-                         (reset! new-label ""))
-        ;; _ (js/console.log "add-drop-dialog source: " source-id)
-        ]
+                              (reset! new-label ""))]
     (fn []
       (let [source-id @(rf/subscribe [::subs/source])
             submit-fn  (fn [e] (.preventDefault e)
                          (when (seq @new-label)
-                           (let [next-drop (drop/new-drop @new-label @(rf/subscribe [::subs/next-id]) source-id)]
+                           (let [next-drop (drop/new-drop
+                                            @new-label
+                                            @(rf/subscribe [::subs/next-id])
+                                            source-id)]
                              (rf/dispatch [::events/add-drop next-drop]))
                            (close-modal!)))]
         [:<>
