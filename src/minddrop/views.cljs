@@ -11,6 +11,7 @@
    [reagent-mui.material.drawer              :refer [drawer]]
    [reagent-mui.material.form-control-label  :refer [form-control-label]]
    [reagent-mui.material.switch              :refer [switch]]
+   [reagent-mui.material.button              :refer [button]]
    ;; MUI Icons
    [reagent-mui.icons.add                     :refer [add]]
    [reagent-mui.icons.delete                  :refer [delete]]
@@ -27,6 +28,7 @@
    [reagent-mui.icons.save                    :refer [save]]
    [reagent-mui.icons.close                   :refer [close]]
    [reagent-mui.icons.close-outlined          :refer [close-outlined]]
+   [reagent-mui.icons.backspace               :refer [backspace]]
    ;; Minddrop
    [minddrop.config :as config]
    [minddrop.events :as events]
@@ -49,7 +51,7 @@
 ;; TODO these are shadowed by locals within the filter drawer... check on that!
 (defonce search-by-source? (r/atom true))
 (defn toggle-search-scope! [] (swap! search-by-source? not))
-;; (defn search-local!)
+(defn search-local! [] (reset! search-by-source? true))
 
 ;; Open/Close Filter Drawer
 (defonce filter-drawer-open? (r/atom false))
@@ -150,9 +152,12 @@
   "This collapsible drawer allows the user to edit
    the parameters with which drops are filtered."
   []
-  (let [source           @(rf/subscribe [::subs/source])
-        search-by-source? (r/atom true)
-        toggle-search-scope! #(swap! search-by-source? not)]
+  (let [source         @(rf/subscribe [::subs/source])
+        stop-searching! (fn [_]
+                          (reset! label-query "")
+                          (rf/dispatch [::events/update-view-params :source (drop/constants :master-id)])
+                          (rf/dispatch [::events/update-view-params :label ""])
+                          (search-local!))]
     (fn []
       [drawer {:open @filter-drawer-open? :on-close toggle-filter-drawer!}
        [:form {:style {:margin-top "auto"
@@ -178,18 +183,23 @@
                                                                            (drop/constants :master-id)
                                                                            nil)]))}]
         [:br] ;; TODO the components on both sides of this BR are extremely coupled
-        [text-field
-         {:label "Drop Label Contains:"
-          :size  "small"
-          :sx {:margin-top "0.5em"}
-          :value @label-query
-          :on-change (fn [e]
-                       (let [next-val (-> e .-target .-value)]
-                         (rf/dispatch [::events/update-view-params :label (-> e .-target .-value)])
-                         (reset! label-query (-> e .-target .-value))
-                         (when (not (seq next-val))
-                           (toggle-search-scope!)
-                           (rf/dispatch [::events/update-view-params :source (drop/constants :master-id)]))))}]]
+        [:div {:style {:display "flex" :align-items "center"}}
+         [text-field
+          {:label "Drop Label Contains:"
+           :size  "small"
+           :sx {:margin-top "0.5em"}
+           :value @label-query
+           :on-change (fn [e]
+                        (let [next-val (-> e .-target .-value)]
+                          (rf/dispatch [::events/update-view-params :label (-> e .-target .-value)])
+                          (reset! label-query (-> e .-target .-value))
+                          (when (not (seq next-val))
+                            (stop-searching! e))))}]
+
+         [button ;; nudge the button into place
+          {:style {:position "relative" :top "0.2em"}
+           :on-click stop-searching!}
+          [backspace]]]]
        [icon-button
         {:sx {:margin-inline "auto"
               :margin-bottom "24px"
