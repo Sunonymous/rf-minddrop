@@ -11,6 +11,8 @@
    [reagent-mui.material.text-field           :refer [text-field]]
    ;; MUI Icons
    [reagent-mui.icons.add                     :refer [add]]
+   [reagent-mui.icons.link                    :refer [link]]
+   [reagent-mui.icons.close-outlined          :refer [close-outlined]]
    ;; Minddrop
    [minddrop.config :as config]
    [minddrop.events :as events]
@@ -23,6 +25,10 @@
 
 ;; This file contains hiccup for particular dialogs and modals
 ;; that the user needs to interact with.
+
+;; General functions for reusability
+(defn open-modal!  [modal*] (reset! modal* true))
+(defn close-modal! [modal*] (reset! modal* false))
 
 (defn add-drop-dialog []
   (let [open?          (r/atom false)
@@ -74,3 +80,62 @@
             {:on-click #(close-modal!)
              :aria-label "cancel adding new drop"}
             "Close"]]]]))))
+
+(defn drop-link-dialog []
+  (let [open?         (r/atom false)
+        open-modal!  #(open-modal! open?)
+        close-modal! #(close-modal! open?)
+        selected-link (r/atom nil)
+        link-to-add   (r/atom "")]
+    (fn []
+      (let [drop    @(rf/subscribe [::subs/drop @(rf/subscribe [::subs/first-in-queue])])]
+        [:<>
+         [icon-button
+          {:on-click open-modal!
+           :size "small"}
+          [link]]
+         [dialog
+          {:open     @open?
+           :on-close close-modal!}
+          [dialog-title "Edit Drop Links"]
+          [dialog-content
+           [dialog-content-text "Your drop contains the following links:"]
+           (for [link (:links drop)]
+             [button ^{:key link}
+              {:variant "outlined"
+               :sx    {:display "inline-block"
+                       :margin  "4px"
+                       :padding "0.125em 0.5em"
+                       :border  "1px solid black"
+                       :border-radius "8px"}
+               :on-click #(reset! selected-link link)
+               :aria-label (str "select link " link)} link])
+           (when @selected-link
+             [:div {:style {:margin-top "1em"}}
+              [dialog-content-text
+               "Selected Link: " [:span {:style {:font-weight "bold"}} @selected-link]]
+              [button
+               {:variant "contained"
+                :color   "error"
+                :size    "small"
+                :on-click (fn [_] (rf/dispatch [::events/unlink-drop (:id drop) @selected-link])
+                            (reset! selected-link nil))}
+               "Remove Link"]])
+           [:hr {:style {:margin-block "1em"}}]
+           [dialog-content-text "Add Link"]
+           [text-field
+            {:variant "outlined"
+             :size    "small"
+             :on-change #(reset! link-to-add (-> % .-target .-value))}]
+           [button
+            {:sx {:position "relative" :top "0.25em" :left "0.5em"}
+             :variant "outlined"
+             :size    "small"
+             :align-self "center"
+             :aria-label (str "add link " @link-to-add " to drop")
+             :on-click (fn [_] (rf/dispatch [::events/link-drop (:id drop) @link-to-add])
+                         (reset! link-to-add ""))}
+            "Add"]
+           [dialog-actions
+            [button {:on-click close-modal!} "Close"]]]
+          ]]))))
