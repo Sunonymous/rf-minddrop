@@ -82,3 +82,10 @@
 ;; Used primarily to reset focus filters.
 (defn unfocus [drop]
   (assoc drop :focused false))
+
+;; Links are similar to tags
+(defn add-link [drop link]
+  (update drop :links conj link))
+
+(defn remove-link [drop link]
+  (update drop :links disj link))

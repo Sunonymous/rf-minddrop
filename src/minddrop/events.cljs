@@ -1,6 +1,7 @@
 (ns minddrop.events
   (:require
    [cljs.reader        :refer [read-string]]
+   [clojure.string     :refer [lower-case]]
    [clojure.spec.alpha :as s]
    [drop.core          :as drop]
    [pool.core          :as pool]
@@ -105,6 +106,18 @@
  [->local-storage]
  (fn [db [_ drop-id amount]]
    (update-in db [:pool drop-id] drop/resonate amount)))
+
+(rf/reg-event-db
+ ::link-drop
+ [->local-storage]
+ (fn [db [_ drop-id link]]
+   (update-in db [:pool drop-id] drop/add-link (lower-case link))))
+
+(rf/reg-event-db
+ ::unlink-drop
+ [->local-storage]
+ (fn [db [_ drop-id link]]
+   (update-in db [:pool drop-id] drop/remove-link link)))
 
 ;;;;;;;;;;
 ;; Pool ;
