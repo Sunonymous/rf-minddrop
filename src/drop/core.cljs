@@ -6,8 +6,9 @@
   {:initial-resonance 0
    :master-id         1
    :master-label      "All"
-   :focus-boost       0.15
-   :notes-boost       0.25})
+   :focus-boost       0.05
+   :notes-boost       0.25
+   :inner-boost       0.15}) ;; for adding a drop within a source
 
 ;;;;;;;;;;;;;;;;;;;
 ;; Drop Creation ;
