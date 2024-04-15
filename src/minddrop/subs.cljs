@@ -10,6 +10,11 @@
  (fn [db] (:pool db)))
 
 (rf/reg-sub
+ ::drop-labels
+ (fn [] (rf/subscribe [::pool]))
+ (fn [pool] (map (fn [[id drop]] [id (:label drop)]) pool)))
+
+(rf/reg-sub
  ::drop
  (fn [[_ drop-id]]
    (rf/subscribe [::pool]))
