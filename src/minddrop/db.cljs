@@ -23,7 +23,7 @@
 ; View Parameters
 (s/def ::focused boolean?)
 (s/def ::untouched boolean?)
-(s/def ::view-params (s/keys :req-un [::source ::focused ::untouched ::label]))
+(s/def ::view-params (s/keys :req-un [::source ::focused ::untouched]))
 
 ; DB
 ;; Priority ID is the ID that is shown first as long as it is not nil. If it has the value
@@ -43,8 +43,7 @@
 (def default-view-params
   {:source    (constants :master-id)
    :focused   false
-   :untouched true
-   :label     ""})
+   :untouched true})
 
 (def default-db
   {:user   "me"

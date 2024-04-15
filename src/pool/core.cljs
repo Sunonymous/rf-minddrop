@@ -67,29 +67,23 @@
    predicate for use in the filter function. Filters may be:
    :focused   -- true / false
    :untouched -- true / false
-   :source-id -- (optional) <source id>
-   :label     -- substring included in label"
+   :source-id -- (optional) <source id>"
   [filters]
     (fn [drop]
       (let [focused?        (drop/is-focused? drop)
             untouched?      (drop/untouched? drop)
-            matches-label?  (drop/label-includes? (filters :label) drop)
             not-master?     (not= (drop :id) (drop/constants :master-id))
             not-the-source? (not= (drop :id) (filters :source))]
         (if (filters :focused)
           (and ;; only focused drops
            focused?
-           untouched?
-           (if-else-true (seq (filters :label))
-             matches-label?))
+           untouched?)
           (and ;; any valid drop
            not-master?
            (if-else-true (filters :untouched)
              untouched?) ;; this is currently unreachable
            (if-else-true (filters :source)
              (drop/has-source? (:source filters) drop)) ;; equivalent of searching all sources
-           (if-else-true (seq (filters :label))
-             (drop/label-includes? (filters :label) drop))
            not-the-source?)))))
 
 (defn pool->queue
