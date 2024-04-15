@@ -9,17 +9,23 @@
    [reagent-mui.material.dialog-content       :refer [dialog-content]]
    [reagent-mui.material.dialog-content-text  :refer [dialog-content-text]]
    [reagent-mui.material.text-field           :refer [text-field]]
+   [reagent-mui.material.select               :refer [select]]
+   [reagent-mui.material.form-control         :refer [form-control]]
+   [reagent-mui.material.input-label          :refer [input-label]]
+   [reagent-mui.material.menu-item            :refer [menu-item]]
    ;; MUI Icons
    [reagent-mui.icons.add                     :refer [add]]
    [reagent-mui.icons.link                    :refer [link]]
    [reagent-mui.icons.close-outlined          :refer [close-outlined]]
+   [reagent-mui.icons.manage-search           :refer [manage-search]]
    ;; Minddrop
+   [clojure.string :refer [includes? lower-case]]
    [minddrop.config :as config]
    [minddrop.events :as events]
    [minddrop.subs   :as subs]
    [minddrop.util   :as util]
    [pool.core       :as pool]
-   [drop.core       :as drop]
+   [drop.core       :as drop :refer [constants]]
    [re-frame.core   :as rf]
    [reagent.core :as r]))
 
@@ -140,3 +146,78 @@
            [dialog-actions
             [button {:on-click close-modal!} "Close"]]]
           ]]))))
+
+;; This component is an inner component used in multiple dialogs. It is
+;; passed a ratom to store and modify the selected drop id.
+(defn drop-selector [selected-id*]
+  (let [labels      @(rf/subscribe [::subs/drop-labels])
+        label-filter (r/atom "")
+        ]
+    (fn [selected-id*]
+      (let [filtered-labels (filter
+                             (fn [[id label]]
+                               (and
+                                (includes? (lower-case label) (lower-case @label-filter))
+                                (not= id (constants :master-id)))) labels)]
+        [:div {:style {
+                       :display "flex"
+                       :flex-direction "column"
+                       :align-items "center"}}
+         ;; This next line is hacky. I struggled with getting the select
+         ;; component to re-render every time the filter changed.
+         [:pre {:style { :display "none"}} (str filtered-labels)]
+         [text-field
+          {:sx {:margin "1em 0"}
+           :variant     "outlined"
+           :size        "small"
+           :placeholder "Filter Labels"
+           :on-change (fn [e]
+                        (reset! label-filter (-> e .-target .-value))
+                        (reset! selected-id* nil))}]
+         [form-control
+          {:sx {:display "block"}
+           :variant "standard"}
+          [input-label {:id "select-drop-input-label"} "Choose a Drop:"]
+          [select
+           {:sx {:min-width "150px"}
+            :label-id  "select-drop-input-label"
+            :disabled  (empty? filtered-labels)
+            :value     (or @selected-id* "")
+            :on-change #(reset! selected-id* (-> % .-target .-value))}
+           (for [[id label] filtered-labels]
+             [menu-item {:key label :value id} label])]
+          ]
+         ]))))
+
+(defn jump-to-drop-dialog []
+  (let [open?         (r/atom false)
+        open-modal!  #(open-modal! open?)
+        selected-id   (r/atom nil)
+        close-modal! (fn []
+                       (reset! selected-id nil)
+                       (close-modal! open?))]
+    (fn []
+      [:<>
+       [icon-button
+        {:on-click open-modal!}
+        [manage-search {:font-size "large"}]]
+       [dialog
+        {
+         :open     @open?
+         :on-close close-modal!}
+        [dialog-title "Jump to Drop"]
+        [dialog-content
+         [drop-selector selected-id]
+         [:hr {:style {:margin-block "1em"}}]
+         [dialog-actions
+          [button {:on-click (fn [_] ;; arrive at drop and set source to drop's source
+                               (rf/dispatch [::events/prioritize-drop @selected-id])
+                               (rf/dispatch [::events/update-view-params :source
+                                             (:source @(rf/subscribe [::subs/drop @selected-id]))])
+                               (close-modal!))
+                   :disabled (not @selected-id)} "Jump to"]
+          [button {:on-click (fn [_] ;; set source to drop's id
+                               (rf/dispatch [::events/update-view-params :source @selected-id])
+                               (close-modal!))
+                   :disabled (not @selected-id)} "Jump in"]
+          [button {:on-click close-modal!} "Close"]]]]])))
