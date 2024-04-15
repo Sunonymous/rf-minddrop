@@ -14,7 +14,7 @@ button.clean {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    height: 100vh;
+    height: 100dvh;
     border: 2px solid black;
 }
 
