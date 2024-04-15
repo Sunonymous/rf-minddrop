@@ -50,7 +50,8 @@
                                             @new-label
                                             @(rf/subscribe [::subs/next-id])
                                             source-id)]
-                             (rf/dispatch [::events/add-drop next-drop]))
+                             (rf/dispatch [::events/add-drop next-drop])
+                             (rf/dispatch [::events/resonate-drop source-id (constants :inner-boost)]))
                            (close-modal!)))]
         [:<>
          [icon-button
