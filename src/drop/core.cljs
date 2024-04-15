@@ -20,7 +20,7 @@
    :resonance  (constants :initial-resonance)
    :focused    false
    :notes      ""
-   :links      #{}
+   :tags      #{}
    :touched    false})
 
 ;;;;;;;;;;;
@@ -84,9 +84,8 @@
 (defn unfocus [drop]
   (assoc drop :focused false))
 
-;; Links are similar to tags
-(defn add-link [drop link]
-  (update drop :links conj link))
+(defn add-tag [drop tag]
+  (update drop :tags conj tag))
 
-(defn remove-link [drop link]
-  (update drop :links disj link))
+(defn remove-tag [drop tag]
+  (update drop :tags disj tag))

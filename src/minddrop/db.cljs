@@ -11,14 +11,14 @@
 (s/def ::label     string?)
 (s/def ::resonance number?)
 (s/def ::notes     string?)
-(s/def ::links     set?)
+(s/def ::tags      set?)
 (s/def ::touched   boolean?)
 (s/def ::source    pos-int?)
 
 ; Drop-full
 (s/def ::drop (s/keys :req-un
                       [::id ::label ::source ::resonance
-                       ::notes ::links ::focused ::touched]))
+                       ::notes ::tags ::focused ::touched]))
 
 ; View Parameters
 (s/def ::focused boolean?)

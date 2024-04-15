@@ -8,12 +8,7 @@
    [reagent-mui.material.accordion           :refer [accordion]]
    [reagent-mui.material.accordion-summary   :refer [accordion-summary]]
    [reagent-mui.material.accordion-details   :refer [accordion-details]]
-   [reagent-mui.material.drawer              :refer [drawer]]
-   [reagent-mui.material.form-control-label  :refer [form-control-label]]
-   [reagent-mui.material.switch              :refer [switch]]
-   [reagent-mui.material.button              :refer [button]]
    ;; MUI Icons
-   [reagent-mui.icons.add                     :refer [add]]
    [reagent-mui.icons.delete                  :refer [delete]]
    [reagent-mui.icons.edit                    :refer [edit]]
    [reagent-mui.icons.expand-more             :refer [expand-more]]
@@ -27,8 +22,6 @@
    [reagent-mui.icons.notes                   :refer [notes]]
    [reagent-mui.icons.save                    :refer [save]]
    [reagent-mui.icons.close                   :refer [close]]
-   [reagent-mui.icons.close-outlined          :refer [close-outlined]]
-   [reagent-mui.icons.backspace               :refer [backspace]]
    ;; Minddrop
    [modals.views    :as modals]
    [minddrop.config :as config]
@@ -177,7 +170,7 @@
             {:on-click toggle-note-edit!
              :size "small"}
             [notes]])
-         [modals/drop-link-dialog]
+         [modals/drop-tag-dialog]
          ]]]))
 
 (defn navigation-controls

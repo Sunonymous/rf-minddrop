@@ -108,16 +108,16 @@
    (update-in db [:pool drop-id] drop/resonate amount)))
 
 (rf/reg-event-db
- ::link-drop
+ ::add-drop-tag
  [->local-storage]
- (fn [db [_ drop-id link]]
-   (update-in db [:pool drop-id] drop/add-link (lower-case link))))
+ (fn [db [_ drop-id tag]]
+   (update-in db [:pool drop-id] drop/add-tag (lower-case tag))))
 
 (rf/reg-event-db
- ::unlink-drop
+ ::remove-drop-tag
  [->local-storage]
- (fn [db [_ drop-id link]]
-   (update-in db [:pool drop-id] drop/remove-link link)))
+ (fn [db [_ drop-id tag]]
+   (update-in db [:pool drop-id] drop/remove-tag tag)))
 
 ;;;;;;;;;;
 ;; Pool ;

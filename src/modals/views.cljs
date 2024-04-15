@@ -22,6 +22,7 @@
    [reagent-mui.icons.close-outlined          :refer [close-outlined]]
    [reagent-mui.icons.more-horiz-rounded      :refer [more-horiz-rounded]]
    [reagent-mui.icons.manage-search           :refer [manage-search]]
+   [reagent-mui.icons.sell                    :refer [sell]]
    ;; Minddrop
    [clojure.string :refer [includes? lower-case]]
    [minddrop.config :as config]
@@ -92,61 +93,64 @@
              :aria-label "cancel adding new drop"}
             "Close"]]]]))))
 
-(defn drop-link-dialog []
+(defn drop-tag-dialog []
   (let [open?         (r/atom false)
         open-modal!  #(open-modal! open?)
         close-modal! #(close-modal! open?)
-        selected-link (r/atom nil)
-        link-to-add   (r/atom "")]
+        selected-tag  (r/atom nil)
+        tag-to-add    (r/atom "")]
     (fn []
       (let [drop    @(rf/subscribe [::subs/drop @(rf/subscribe [::subs/first-in-queue])])]
         [:<>
          [icon-button
           {:on-click open-modal!
            :size "small"}
-          [link]]
+          [sell]]
          [dialog
           {:open     @open?
            :on-close close-modal!}
-          [dialog-title "Edit Drop Links"]
+          [dialog-title "Edit Drop Tags"]
           [dialog-content
-           [dialog-content-text "Your drop contains the following links:"]
-           (for [link (:links drop)]
-             [button
-              {:key link
-               :variant "outlined"
-               :sx    {:display "inline-block"
-                       :margin  "4px"
-                       :padding "0.125em 0.5em"
-                       :border  "1px solid black"
-                       :border-radius "8px"}
-               :on-click #(reset! selected-link link)
-               :aria-label (str "select link " link)} link])
-           (when @selected-link
+           (when (seq (:tags drop))
+             [:div
+              [dialog-content-text "Your drop contains the following tags:"]
+              (for [tag (:tags drop)]
+                [button
+                 {:key tag
+                  :variant "outlined"
+                  :sx    {:display "inline-block"
+                          :margin  "4px"
+                          :padding "0.125em 0.5em"
+                          :border  "1px solid black"
+                          :border-radius "8px"}
+                  :on-click #(reset! selected-tag tag)
+                  :aria-label (str "select link " tag)} tag])
+              [:hr {:style {:margin-block "1em"}}]])
+           (when @selected-tag
              [:div {:style {:margin-top "1em"}}
               [dialog-content-text
-               "Selected Link: " [:span {:style {:font-weight "bold"}} @selected-link]]
+               "Selected Tag: " [:span {:style {:font-weight "bold"}} @selected-tag]]
               [button
                {:variant "contained"
                 :color   "error"
                 :size    "small"
-                :on-click (fn [_] (rf/dispatch [::events/unlink-drop (:id drop) @selected-link])
-                            (reset! selected-link nil))}
-               "Remove Link"]])
-           [:hr {:style {:margin-block "1em"}}]
-           [dialog-content-text "Add Link"]
+                :on-click (fn [_] (rf/dispatch [::events/remove-drop-tag (:id drop) @selected-tag])
+                            (reset! selected-tag nil))}
+               "Remove Tag"]
+              [:hr {:style {:margin-block "1em"}}]])
+           [dialog-content-text "Add Tag"]
            [text-field
             {:variant "outlined"
              :size    "small"
-             :on-change #(reset! link-to-add (-> % .-target .-value))}]
+             :on-change #(reset! tag-to-add (-> % .-target .-value))}]
            [button
             {:sx {:position "relative" :top "0.25em" :left "0.5em"}
              :variant    "outlined"
              :size       "small"
-             :aria-label (str "add link " @link-to-add " to drop")
-             :on-click (fn [_] (when (seq @link-to-add)
-                                 (rf/dispatch [::events/link-drop (:id drop) @link-to-add]))
-                         (reset! link-to-add ""))}
+             :aria-label (str "add link " @tag-to-add " to drop")
+             :on-click (fn [_] (when (seq @tag-to-add)
+                                 (rf/dispatch [::events/add-drop-tag (:id drop) @tag-to-add]))
+                         (reset! tag-to-add ""))}
             "Add"]
            [dialog-actions
             [button {:on-click close-modal!} "Close"]]]
