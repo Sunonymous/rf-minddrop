@@ -38,3 +38,4 @@ build/
 .clj-kondo
 .calva/output-window/output.calva-repl
 karma.conf.js
+*.cache
