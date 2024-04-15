@@ -11,12 +11,16 @@
    [reagent-mui.material.text-field           :refer [text-field]]
    [reagent-mui.material.select               :refer [select]]
    [reagent-mui.material.form-control         :refer [form-control]]
+   [reagent-mui.material.form-control-label   :refer [form-control-label]]
    [reagent-mui.material.input-label          :refer [input-label]]
    [reagent-mui.material.menu-item            :refer [menu-item]]
+   [reagent-mui.material.drawer               :refer [drawer]]
+   [reagent-mui.material.switch               :refer [switch]]
    ;; MUI Icons
    [reagent-mui.icons.add                     :refer [add]]
    [reagent-mui.icons.link                    :refer [link]]
    [reagent-mui.icons.close-outlined          :refer [close-outlined]]
+   [reagent-mui.icons.more-horiz-rounded      :refer [more-horiz-rounded]]
    [reagent-mui.icons.manage-search           :refer [manage-search]]
    ;; Minddrop
    [clojure.string :refer [includes? lower-case]]
@@ -222,3 +226,37 @@
                                (close-modal!))
                    :disabled (not @selected-id)} "Jump in"]
           [button {:on-click close-modal!} "Close"]]]]])))
+
+(defn settings-drawer []
+  (let [open?         (r/atom false)
+        open-modal!  #(open-modal! open?)
+        close-modal! #(close-modal! open?)]
+    (fn []
+      [:div
+       [icon-button
+        {:sx {:position "fixed" :top "2rem" :right "2rem"}
+         :on-click open-modal!}
+        [more-horiz-rounded {:font-size "large"}]]
+       [drawer {:open @open?
+                :on-close close-modal!
+                :anchor "right"}
+        [:div {:style {:height "100%"
+                       :display "flex"
+                       :flex-direction "column"
+                       :padding "2em 3em"}}
+         [:h2  "Settings"]
+         [:h3  "— Drops"]
+         [button
+          {:sx {:margin "1em 0 1em 0"}
+           :variant "outlined"
+           :on-click #(rf/dispatch [::events/unfocus-all-drops])
+           :aria-label "unfocus all drops"}
+          "Unfocus All Drops"]
+         [icon-button
+          {:sx {:margin-top "auto"
+                :margin-inline "auto"
+                :margin-bottom "24px"
+                :width "fit-content"}
+           :on-click close-modal!}
+          [close-outlined]]]]]
+      )))

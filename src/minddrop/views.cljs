@@ -43,25 +43,13 @@
 ;;;;;;;;;;;;;;;;;
 ;; Local State ;
 
-;; Pool Filters
-;; Users can filter drops by label.(defonce label-query (r/atom ""))
-
-;; These searches may be within a particular source drop or the full pool.
-;; TODO these are shadowed by locals within the filter drawer... check on that!
-(defonce search-by-source? (r/atom true))
-(defn toggle-search-scope! [] (swap! search-by-source? not))
-(defn search-local! [] (reset! search-by-source? true))
-
-;; Open/Close Filter Drawer
-(defonce filter-drawer-open? (r/atom false))
-(defn toggle-filter-drawer! [] (swap! filter-drawer-open? not))
-
 ;; Are drop notes being edited?
 (defonce editing-notes? (r/atom false))
 (defn toggle-note-edit! [] (swap! editing-notes? not))
 (defn stop-editing-notes! [] (reset! editing-notes? false))
 
 ;; Function used multiple times in navigation controls
+;; could be made into an event
 (defn discard-prioritized-id! [] (rf/dispatch [::events/prioritize-drop nil]))
 
 ;;;;;;;;;;;;;;;;;;;;
@@ -132,71 +120,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Major Components ;
 
-(defn filter-drawer
-  "This collapsible drawer allows the user to edit
-   the parameters with which drops are filtered."
-  []
-  (let [stop-searching! (fn [_]
-                          (rf/dispatch [::events/update-view-params :source (drop/constants :master-id)])
-                          (rf/dispatch [::events/update-view-params :label ""])
-                          (search-local!))]
-    (fn []
-      [drawer {:open @filter-drawer-open? :on-close toggle-filter-drawer!}
-       [:form {:style {:margin-top "auto"
-                       :margin-bottom "auto"
-                       :padding "4rem"}}
-        [:h2  "Drop Filters"]
-        [form-control-label
-         {:label "Focused Drops Only"
-          :control (r/as-element [switch])
-          :checked (:focused @(rf/subscribe [::subs/view-params]))
-          :label-placement "start"
-          :on-change #(rf/dispatch [::events/update-view-params :focused (-> % .-target .-checked)])}]
-        [:br]
-        [button
-         {:sx {:margin "1em 0 1em 0"}
-          :variant "outlined"
-          :on-click #(rf/dispatch [::events/unfocus-all-drops])
-          :aria-label "unfocus all drops"}
-         "Unfocus All Drops"]
-        [:br]
-        [:hr]
-        [:br]
-        [form-control-label
-         {:label "Search All Drops"
-          :control (r/as-element [switch])
-          :disabled (not (seq (:label @(rf/subscribe [::subs/view-params]))))
-          :checked (not @search-by-source?)
-          :label-placement "start"
-          :on-change (fn [_]
-                       (toggle-search-scope!)
-                       (rf/dispatch [::events/update-view-params :source (if @search-by-source?
-                                                                           (drop/constants :master-id)
-                                                                           nil)]))}]
-        [:br] ;; TODO the components on both sides of this BR are extremely coupled
-        [:div {:style {:display "flex" :align-items "center"}}
-         [text-field
-          {:label "Drop Label Contains:"
-           :size  "small"
-           :sx {:margin-top "0.5em"}
-           :value (:label @(rf/subscribe [::subs/view-params]))
-           :on-change (fn [e]
-                        (let [next-val (-> e .-target .-value)]
-                          (rf/dispatch [::events/update-view-params :label next-val])
-                          (when (not (seq next-val))
-                            (stop-searching! e))))}]
-         [button ;; nudge the button into place
-          {:style {:position "relative" :top "0.2em"}
-           :on-click stop-searching!
-           :aria-label "clear search"}
-          [backspace]]]]
-       [icon-button
-        {:sx {:margin-inline "auto"
-              :margin-bottom "24px"
-              :width "fit-content"}
-         :on-click toggle-filter-drawer!}
-        [close-outlined]]])))
-
 (defn no-drop-available
   "Displays when no drop is visible for interaction."
   []
@@ -216,7 +139,6 @@
            :aria-label "refresh focused drops"}
           [autorenew-outlined {:font-size "large"}]]
          [:p "No drops are focused or nothing matches your search."])
-
        :otherwise
        [:p "No drop to display!"])]))
 
@@ -339,9 +261,7 @@
 (defn minddrop []
   (let [drop-id     @(rf/subscribe [::subs/first-in-queue])]
     [:div#minddrop
-     [:div#queue-controls
-      [:button#filter_drawer_button.clean {:on-click toggle-filter-drawer!} "➤"]
-      [filter-drawer]]
+     [modals/settings-drawer]
      [:div#drop-display
       (if drop-id
         [open-drop-card]
