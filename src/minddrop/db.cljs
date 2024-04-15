@@ -26,13 +26,15 @@
 (s/def ::view-params (s/keys :req-un [::source ::focused ::untouched ::label]))
 
 ; DB
-(s/def ::focused-ids list?)
+;; Priority ID is the ID that is shown first as long as it is not nil. If it has the value
+;; of a particular drop ID, it will always be the first drop shown.
+(s/def ::priority-id (s/or :id int? :nil nil?)) ;; not pos-int, in case we want to implement archive of id 0
 (s/def ::pool (s/coll-of (fn [[id drop]]
                            (s/and
                             (s/valid? ::id   id)
                             (s/valid? ::drop drop)))))
 ; DB-full
-(s/def ::db (s/keys :req-un [::pool ::view-params]))
+(s/def ::db (s/keys :req-un [::pool ::view-params ::priority-id]))
 
 ;;;;;;;;;;;;;;
 ;; Defaults ;
@@ -50,4 +52,5 @@
                                     (constants :master-label)
                                     (constants :master-id)
                                     (constants :master-id))}
-   :view-params default-view-params})
+   :view-params default-view-params
+   :priority-id nil})

@@ -49,11 +49,18 @@
  (fn [db] (:view-params db)))
 
 (rf/reg-sub
+ ::priority-id
+ (fn [db] (:priority-id db)))
+
+(rf/reg-sub
  ::first-in-queue
  (fn []
-   (rf/subscribe [::queue]))
- (fn [queue]
-   (first queue)))
+   [(rf/subscribe [::priority-id])
+    (rf/subscribe [::queue])])
+ (fn [[priority-id queue]]
+   (if priority-id
+     priority-id
+     (first queue))))
 
 (rf/reg-sub
  ::focused-drops
