@@ -172,3 +172,14 @@
  ::prioritize-drop
  (fn [db [_ drop-id]]
    (assoc db :priority-id drop-id)))
+
+(rf/reg-event-fx
+ ::export-user-data
+ ;; TODO write this function
+ (fn [_] 42))
+
+(rf/reg-event-db
+ ::delete-user-data
+ (fn [_]
+   (js/localStorage.setItem local-storage-key nil)
+   (.reload js/location true)))

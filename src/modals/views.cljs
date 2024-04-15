@@ -252,6 +252,26 @@
            :on-click #(rf/dispatch [::events/unfocus-all-drops])
            :aria-label "unfocus all drops"}
           "Unfocus All Drops"]
+        ;; TODO -- implement
+        ;;  [:h3  "— Save Zone"]
+        ;;  [button
+        ;;   {:sx {:margin "1em 0 1em 0"}
+        ;;    :variant "contained"
+        ;;    :color   "primary"
+        ;;    :on-click (fn [_] (rf/dispatch [::events/export-user-data]))
+        ;;    :aria-label "export user data to file"}
+        ;;   "Export My Data"]
+         [:h3  "— Danger Zone"]
+         [button
+          {:sx {:margin "1em 0 1em 0"}
+           :variant "contained"
+           :color   "error"
+           :on-click (fn [_]
+                       (let [confirmed? (js/confirm "Are you sure you want to delete all data? This cannot be undone.")]
+                         (when confirmed?
+                           (rf/dispatch [::events/delete-user-data]))))
+           :aria-label "delete user data"}
+          "Delete My Data"]
          [icon-button
           {:sx {:margin-top "auto"
                 :margin-inline "auto"
