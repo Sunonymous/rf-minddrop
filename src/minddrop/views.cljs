@@ -61,6 +61,9 @@
 (defn toggle-note-edit! [] (swap! editing-notes? not))
 (defn stop-editing-notes! [] (reset! editing-notes? false))
 
+;; Function used multiple times in navigation controls
+(defn discard-prioritized-id! [] (rf/dispatch [::events/prioritize-drop nil]))
+
 ;;;;;;;;;;;;;;;;;;;;
 ;; Action Buttons ;
 
@@ -77,6 +80,7 @@
                                                         (str (count dependents) " inner drop(s) will be deleted.")))
                                 confirmed? (js/confirm confirmation-msg)]
                             (when confirmed?
+                              (discard-prioritized-id!)
                               (doseq [id (conj dependents drop-id)]
                                 (rf/dispatch [::events/remove-drop id]))
                               (when (nil? (@pool @source)) ;; move back to master if necessary
@@ -260,28 +264,45 @@
   []
   (let [source     @(rf/subscribe [::subs/source])
         drop-id    @(rf/subscribe [::subs/first-in-queue])]
-    [:div#navigation_controls
-     [icon-button
-      {:on-click #(rf/dispatch [::events/update-view-params :source (:source (@(rf/subscribe [::subs/pool]) source))])
-       :disabled (or
-                  @(rf/subscribe [::subs/focus-mode])
-                  (= source (drop/constants :master-id)))
-       :aria-label "exit drop"}
-      [zoom-out {:font-size "large"}]]
-     [modals/add-drop-dialog]
-     [icon-button
-      {:on-click (fn [] (stop-editing-notes!)
-                   (rf/dispatch [::events/touch-drop drop-id]))
-       :disabled (not drop-id)
-       :aria-label "skip to next drop"}
-      [arrow-right-alt {:font-size "large"}]]
-     [icon-button {:on-click #(rf/dispatch [::events/update-view-params :source drop-id])
-                   :size "large"
-                   :disabled (or
-                              (not drop-id)
-                              @(rf/subscribe [::subs/focus-mode]))
-                   :aria-label "enter drop"}
-      [zoom-in {:font-size "large"}]]]))
+     [:div#navigation_controls
+      [icon-button
+       {:on-click (fn [] (discard-prioritized-id!)
+                         (rf/dispatch [::events/update-view-params :focused
+                                       (not @(rf/subscribe [::subs/focus-mode]))]))
+        :aria-label "view focused drops"
+        :sx {:margin-left "auto"}}
+       (if @(rf/subscribe [::subs/focus-mode])
+         [visibility     {:font-size "large"}]
+         [visibility-off {:font-size "large"}])]
+      [icon-button
+       {:on-click (fn [_]
+                    (rf/dispatch [::events/update-view-params :source
+                                  (:source @(rf/subscribe [::subs/drop source]))])
+                    (discard-prioritized-id!))
+        :disabled (or
+                   @(rf/subscribe [::subs/focus-mode])
+                   (= source (drop/constants :master-id)))
+        :aria-label "exit drop"}
+       [zoom-out {:font-size "large"}]]
+      [modals/add-drop-dialog]
+      [icon-button
+       {:on-click (fn []
+                    (stop-editing-notes!)
+                    (rf/dispatch [::events/touch-drop drop-id]) ;; this needs to go first, as
+                    (discard-prioritized-id!))                  ;; the queue is reset immediately
+        :disabled (not drop-id)
+        :aria-label "skip to next drop"}
+       [arrow-right-alt {:font-size "large"}]]
+      [icon-button {:on-click (fn [_]
+                                (rf/dispatch [::events/update-view-params :source drop-id])
+                                (discard-prioritized-id!))
+                    :size "large"
+                    :disabled (or
+                               (not drop-id)
+                               @(rf/subscribe [::subs/focus-mode]))
+                    :aria-label "enter drop"}
+       [zoom-in {:font-size "large"}]]
+      [modals/jump-to-drop-dialog]]))
 
 (defn banner-source
   [source-id]
