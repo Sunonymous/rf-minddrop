@@ -41,10 +41,6 @@
 (defn toggle-note-edit! [] (swap! editing-notes? not))
 (defn stop-editing-notes! [] (reset! editing-notes? false))
 
-;; Function used multiple times in navigation controls
-;; could be made into an event
-(defn discard-prioritized-id! [] (rf/dispatch [::events/prioritize-drop nil]))
-
 ;;;;;;;;;;;;;;;;;;;;
 ;; Action Buttons ;
 
@@ -61,7 +57,7 @@
                                                         (str (count dependents) " inner drop(s) will be deleted.")))
                                 confirmed? (js/confirm confirmation-msg)]
                             (when confirmed?
-                              (discard-prioritized-id!)
+                              (rf/dispatch [::events/discard-prioritized-id])
                               (doseq [id (conj dependents drop-id)]
                                 (rf/dispatch [::events/remove-drop id]))
                               (when (nil? (@pool @source)) ;; move back to master if necessary
@@ -184,9 +180,10 @@
         drop-id    @(rf/subscribe [::subs/first-in-queue])]
      [:div#navigation_controls
       [icon-button
-       {:on-click (fn [] (discard-prioritized-id!)
-                         (rf/dispatch [::events/update-view-params :focused
-                                       (not @(rf/subscribe [::subs/focus-mode]))]))
+       {:on-click (fn []
+                    (rf/dispatch [::events/discard-prioritized-id])
+                    (rf/dispatch [::events/update-view-params :focused
+                                  (not @(rf/subscribe [::subs/focus-mode]))]))
         :aria-label "view focused drops"
         :sx {:margin-left "auto"}}
        (if @(rf/subscribe [::subs/focus-mode])
@@ -196,7 +193,7 @@
        {:on-click (fn [_]
                     (rf/dispatch [::events/update-view-params :source
                                   (:source @(rf/subscribe [::subs/drop source]))])
-                    (discard-prioritized-id!))
+                    (rf/dispatch [::events/discard-prioritized-id]))
         :disabled (or
                    @(rf/subscribe [::subs/focus-mode])
                    (= source (drop/constants :master-id)))
@@ -206,14 +203,14 @@
       [icon-button
        {:on-click (fn []
                     (stop-editing-notes!)
-                    (rf/dispatch [::events/touch-drop drop-id]) ;; this needs to go first, as
-                    (discard-prioritized-id!))                  ;; the queue is reset immediately
+                    (rf/dispatch [::events/touch-drop drop-id])      ;; needs to go first, as the
+                    (rf/dispatch [::events/discard-prioritized-id])) ;; queue is reset immediately
         :disabled (not drop-id)
         :aria-label "skip to next drop"}
        [arrow-right-alt {:font-size "large"}]]
       [icon-button {:on-click (fn [_]
                                 (rf/dispatch [::events/update-view-params :source drop-id])
-                                (discard-prioritized-id!))
+                                (rf/dispatch [::events/discard-prioritized-id]))
                     :size "large"
                     :disabled (or
                                (not drop-id)
@@ -245,7 +242,12 @@
     [:div#minddrop
      [modals/settings-drawer]
        [:div
-        [drop-banner @(rf/subscribe [::subs/source]) 0]
+        ;; First one is a bit tricky. Inside drops without inner drops, the first-in-queue is nil.
+        ;; So if that's the case, we default to the source id in the view-params. We can't do so
+        ;; immediately, because it doesn't always match the source of prioritized drops.
+        [drop-banner (or
+                      (:id @(rf/subscribe [::subs/parent-drop drop-id]))
+                      @(rf/subscribe [::subs/source])) 0]
         (when drop-id
           [drop-banner drop-id 1])]
      [:div#drop-display

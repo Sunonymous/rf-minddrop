@@ -25,7 +25,7 @@
    [reagent-mui.icons.manage-search           :refer [manage-search]]
    [reagent-mui.icons.sell                    :refer [sell]]
    ;; Minddrop
-   [clojure.string :refer [includes? lower-case]]
+   [clojure.string  :refer [includes? lower-case]]
    [minddrop.config :as config]
    [minddrop.events :as events]
    [minddrop.subs   :as subs]
@@ -169,35 +169,44 @@
                                (and
                                 (includes? (lower-case label) (lower-case @label-filter))
                                 (not= id (constants :master-id)))) labels)]
-        [:div {:style {
+        [:div {:style {:margin-block "1em"
                        :display "flex"
                        :flex-direction "column"
                        :align-items "center"}}
          ;; This next line is hacky. I struggled with getting the select
          ;; component to re-render every time the filter changed.
-         [:pre {:style { :display "none"}} (str filtered-labels)]
-         [text-field
-          {:sx {:margin "1em 0"}
-           :variant     "outlined"
-           :size        "small"
-           :placeholder "Filter Labels"
-           :on-change (fn [e]
-                        (reset! label-filter (-> e .-target .-value))
-                        (reset! selected-id* nil))}]
-         [form-control
-          {:sx {:display "block"}
-           :variant "standard"}
-          [input-label {:id "select-drop-input-label"} "Choose a Drop:"]
-          [select
-           {:sx {:min-width "150px"}
-            :label-id  "select-drop-input-label"
-            :disabled  (empty? filtered-labels)
-            :value     (or @selected-id* "")
-            :on-change #(reset! selected-id* (-> % .-target .-value))}
-           (for [[id label] filtered-labels]
-             [menu-item {:key id :value id} label])]
-          ]
-         ]))))
+         [:pre {:style {:display "none"}} (str filtered-labels)]
+         [:div {:style {:display "flex" :align-items "center"}}
+          [text-field
+           {:sx {:margin "1em 0"}
+            :variant     "outlined"
+            :value       @label-filter
+            :size        "small"
+            :placeholder "Filter Labels"
+            :on-change (fn [e]
+                         (reset! label-filter (-> e .-target .-value))
+                         (reset! selected-id* nil))}]
+          [button
+           {:sx {:width "1em"}
+            :on-click #(reset! label-filter "")
+            :aria-label "clear label filter"
+            :disabled (empty? @label-filter)
+            :size "large"}
+           "X"]]
+         (if (empty? filtered-labels)
+           [dialog-content-text "No drops match your search."]
+           [form-control
+            {:sx {:display "block"}
+             :variant "standard"}
+            [input-label {:id "select-drop-input-label"} "Choose a Drop:"]
+            [select
+             {:sx {:min-width "150px"}
+              :label-id  "select-drop-input-label"
+              :disabled  (empty? filtered-labels)
+              :value     (or @selected-id* "")
+              :on-change #(reset! selected-id* (-> % .-target .-value))}
+             (for [[id label] filtered-labels]
+               [menu-item {:key id :value id} label])]])]))))
 
 (defn jump-to-drop-dialog []
   (let [open?         (r/atom false)
@@ -218,7 +227,6 @@
         [dialog-title "Jump to Drop"]
         [dialog-content
          [drop-selector selected-id]
-         [:hr {:style {:margin-block "1em"}}]
          [dialog-actions
           [button {:on-click (fn [_] ;; arrive at drop and set source to drop's source
                                (rf/dispatch [::events/prioritize-drop @selected-id])
@@ -226,8 +234,9 @@
                                              (:source @(rf/subscribe [::subs/drop @selected-id]))])
                                (close-modal!))
                    :disabled (not @selected-id)} "Jump to"]
-          [button {:on-click (fn [_] ;; set source to drop's id
+          [button {:on-click (fn [_] ;; set source to drop's id and deprioritize any prior drops
                                (rf/dispatch [::events/update-view-params :source @selected-id])
+                               (rf/dispatch [::events/discard-prioritized-id])
                                (close-modal!))
                    :disabled (not @selected-id)} "Jump in"]
           [button {:on-click close-modal!} "Close"]]]]])))
