@@ -231,22 +231,17 @@
            global-search?            "Global Search"
            :otherwise                (:label @(rf/subscribe [::subs/drop source-id]))))])
 
-(defn position-banner
-  "Displays the current position in the pool.
-   Shows the source, the open drop, and the
-   number of drops both in the queue and nested
-   inside the open drop."
-  []
-  (let [source     @(rf/subscribe [::subs/source])
-        drop-id    @(rf/subscribe [::subs/first-in-queue])
-        child-count (count (pool/immediate-children drop-id @(rf/subscribe [::subs/pool])))]
-    [:div#position_banner
-     [banner-source source]
-     [:h4.drop-indicator
-      {:style {:font-size "1rem"}}
-      (when drop-id (apply str "⟶  " (repeat (count @(rf/subscribe [::subs/queue])) "🌢 ")))
-      (:label @(rf/subscribe [::subs/drop drop-id]))
-      (when (pos? child-count) (apply str " ⟶  " (repeat child-count "• ")))]]))
+(defn drop-banner [drop-id level]
+  (let [children @(rf/subscribe [::subs/immediate-children drop-id])
+        sorted-children (group-by (fn [[_ drop]] (drop :touched)) children)]
+    [:div.drop_banner_wrapper
+     [(get [:h3 :h4] level) {:style {:margin-left     (str (* level 0.5) "em")
+                                     :text-decoration (get ["underline" "none"] level)}}
+      (str (when (pos? level) "↳ ") (:label @(rf/subscribe [::subs/drop drop-id])))]
+     (when (seq children)
+       [:div.drop_indicator_wrapper {:style {:opacity (nth [1 0.25] level)}}
+        [:p.drop_indicator         (repeat (count (sorted-children false)) "•")]
+        [:p.touched_drop_indicator (repeat (count (sorted-children true))  "◦")]])]))
 
 ;;;;;;;;;
 ;; App ;
@@ -255,9 +250,12 @@
   (let [drop-id     @(rf/subscribe [::subs/first-in-queue])]
     [:div#minddrop
      [modals/settings-drawer]
+       [:div
+        [drop-banner @(rf/subscribe [::subs/source]) 0]
+        (when drop-id
+          [drop-banner drop-id 1])]
      [:div#drop-display
       (if drop-id
         [open-drop-card]
         [no-drop-available])]
-     [navigation-controls]
-     [position-banner]]))
+     [navigation-controls]]))
