@@ -67,6 +67,21 @@
      priority-id
      (first queue))))
 
+;; Provides the drops considered immediate children of the drop with the given id.
+(rf/reg-sub
+ ::immediate-children
+ (fn [[_ drop-id]]
+   (rf/subscribe [::pool]))
+ (fn [pool [_ drop-id]]
+   (pool/immediate-children drop-id pool)))
+
+(rf/reg-sub
+ ::parent-drop
+ (fn [[_ drop-id]]
+   (rf/subscribe [::pool]))
+ (fn [pool [_ drop-id]]
+   (pool (:source (pool drop-id)))))
+
 (rf/reg-sub
  ::focused-drops
  (fn [db]
