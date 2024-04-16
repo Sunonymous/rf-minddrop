@@ -189,3 +189,8 @@
  (fn [_]
    (js/localStorage.setItem local-storage-key nil)
    (.reload js/location true)))
+
+(rf/reg-event-db
+ ::discard-prioritized-id
+ (fn [db]
+   (assoc db :priority-id nil)))
