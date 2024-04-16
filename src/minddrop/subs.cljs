@@ -88,6 +88,13 @@
    (pool (:source (pool drop-id)))))
 
 (rf/reg-sub
+ ::dependent-drops
+ (fn [[_ drop-id]]
+   (rf/subscribe [::pool]))
+ (fn [pool [_ drop-id]]
+   (pool/dependent-drops pool drop-id)))
+
+(rf/reg-sub
  ::focused-drops
  (fn [db]
    (->> db
