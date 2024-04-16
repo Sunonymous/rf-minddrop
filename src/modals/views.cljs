@@ -21,6 +21,7 @@
    [reagent-mui.icons.link                    :refer [link]]
    [reagent-mui.icons.close-outlined          :refer [close-outlined]]
    [reagent-mui.icons.settings                :refer [settings]]
+   [reagent-mui.icons.control-camera          :refer [control-camera]]
    [reagent-mui.icons.manage-search           :refer [manage-search]]
    [reagent-mui.icons.sell                    :refer [sell]]
    ;; Minddrop
@@ -194,7 +195,7 @@
             :value     (or @selected-id* "")
             :on-change #(reset! selected-id* (-> % .-target .-value))}
            (for [[id label] filtered-labels]
-             [menu-item {:key label :value id} label])]
+             [menu-item {:key id :value id} label])]
           ]
          ]))))
 
@@ -284,3 +285,37 @@
            :on-click close-modal!}
           [close-outlined]]]]]
       )))
+
+(defn move-drop-modal []
+  (let [open?         (r/atom false)
+        open-modal!  #(open-modal! open?)
+        selected-id   (r/atom nil)
+        close-modal!  (fn []
+                        (reset! selected-id nil)
+                        (close-modal! open?))]
+    (fn []
+      (let [drop-id @(rf/subscribe [::subs/first-in-queue])
+            drop    @(rf/subscribe [::subs/drop drop-id])]
+        [:<>
+         [icon-button
+          {:on-click   open-modal!
+           :size       "small"
+           :aria-label "move drop to another source"}
+          [control-camera]]
+         [dialog
+          {:open     @open?
+           :on-close close-modal!}
+          [dialog-title "Move Drop"]
+
+          [dialog-content
+           [dialog-content-text
+            (str "Select a drop to place " (:label drop) " within.")]
+           [drop-selector selected-id]
+           [dialog-actions
+            [button {:on-click (fn [_]
+                                 (rf/dispatch [::events/rehome-drop drop-id @selected-id])
+                                 (close-modal!))
+                     :disabled (not @selected-id)
+                     :aria-label (str "change source of " (:label drop))}
+             "Move Drop"]
+            [button {:on-click close-modal!} "Close"]]]]]))))
