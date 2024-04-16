@@ -116,11 +116,10 @@
                [form-control-label
                 {:label "Jump to drop?"
                  :label-placement "start"
-                 :control (r/as-element [switch
-                                         {:checked @jump-to-drop?
-                                          :on-change #(reset! jump-to-drop? (-> % .-target .-checked))}])}
-                ]
-               ]])]
+                 :control (r/as-element
+                           [switch
+                            {:checked @jump-to-drop?
+                             :on-change #(reset! jump-to-drop? (-> % .-target .-checked))}])}]]])]
           [dialog-actions
            [button
             {:on-click   submit-fn
