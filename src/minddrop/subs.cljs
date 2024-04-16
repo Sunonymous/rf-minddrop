@@ -23,8 +23,13 @@
 
 (rf/reg-sub
  ::source
- (fn [] (rf/subscribe [::view-params]))
- (fn [view-params] (:source view-params)))
+ (fn []
+   [(rf/subscribe [::priority-id])
+    (rf/subscribe [::view-params])])
+ (fn [[priority-id view-params]]
+   (if priority-id
+     (:source @(rf/subscribe [::drop priority-id]))
+     (:source view-params))))
 
 (rf/reg-sub
  ::queue
