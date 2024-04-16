@@ -119,6 +119,12 @@
  (fn [db [_ drop-id tag]]
    (update-in db [:pool drop-id] drop/remove-tag tag)))
 
+(rf/reg-event-db
+ ::rehome-drop
+ [->local-storage]
+ (fn [db [_ drop-id new-source-id]]
+   (assoc-in db [:pool drop-id :source] new-source-id)))
+
 ;;;;;;;;;;
 ;; Pool ;
 
