@@ -82,6 +82,7 @@
          :multiline   true
          :max-rows    20
          :value       @live-notes
+         :input-props {:max-length 500}
          :on-input    #(reset! live-notes (-> % .-target .-value))}]
        [:div {:style {:margin "0.25em" :padding "1em"
                       :border-bottom "1px solid black"}}
@@ -138,7 +139,7 @@
   (let [drop @(rf/subscribe [::subs/drop @(rf/subscribe [::subs/first-in-queue])])]
       [card
        {:variant "outlined"
-        :sx {:min-width "275px"
+        :sx {:min-width "342px"
              :max-width "75%"}}
        [accordion
         [accordion-summary
@@ -241,15 +242,10 @@
   (let [drop-id     @(rf/subscribe [::subs/first-in-queue])]
     [:div#minddrop
      [modals/settings-drawer]
-       [:div
-        ;; First one is a bit tricky. Inside drops without inner drops, the first-in-queue is nil.
-        ;; So if that's the case, we default to the source id in the view-params. We can't do so
-        ;; immediately, because it doesn't always match the source of prioritized drops.
-        [drop-banner (or
-                      (:id @(rf/subscribe [::subs/parent-drop drop-id]))
-                      @(rf/subscribe [::subs/source])) 0]
-        (when drop-id
-          [drop-banner drop-id 1])]
+     [:div
+      [drop-banner @(rf/subscribe [::subs/source]) 0]
+      (when drop-id
+        [drop-banner drop-id 1])]
      [:div#drop-display
       (if drop-id
         [open-drop-card]
