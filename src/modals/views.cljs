@@ -47,17 +47,20 @@
         toggle-modal! #(swap! open? not)
         new-label      (r/atom "")
         close-modal!   (fn [] (reset! open? false)
-                              (reset! new-label ""))]
+                              (reset! new-label ""))
+        add-to-open-drop? (r/atom false)]
     (fn []
       (let [source-id @(rf/subscribe [::subs/source])
+            open-id   @(rf/subscribe [::subs/first-in-queue])
             submit-fn  (fn [e] (.preventDefault e)
                          (when (seq @new-label)
-                           (let [next-drop (drop/new-drop
+                           (let [next-source (if @add-to-open-drop? open-id source-id)
+                                 next-drop (drop/new-drop
                                             @new-label
                                             @(rf/subscribe [::subs/next-id])
-                                            source-id)]
+                                            next-source)]
                              (rf/dispatch [::events/add-drop next-drop])
-                             (rf/dispatch [::events/resonate-drop source-id (constants :inner-boost)]))
+                             (rf/dispatch [::events/resonate-drop next-source (constants :inner-boost)]))
                            (close-modal!)))]
         [:<>
          [icon-button
@@ -68,22 +71,37 @@
          [dialog
           {:open @open?
            :on-close close-modal!
+           :sx {:min-width "275px"}
            :Paper-Props {:component "form"
                          :on-submit submit-fn}}
           [dialog-title "Add Drop"]
           [dialog-content
            [dialog-content-text
-            (str "Drop will be added inside " (:label @(rf/subscribe [::subs/drop source-id])) ".")
+            (str "Drop will be added inside "
+                 (:label @(rf/subscribe [::subs/drop (if @add-to-open-drop?
+                                                       open-id
+                                                       source-id)])) ".")
             [:br]
             "How should we label it?"]
            [text-field
             {:sx          {:margin "1em 2em"}
              :auto-focus   true
              :variant     "standard"
+             :input-props {:max-length 30}
              :size        "small"
              :value       @new-label
              :placeholder "Drop Label"
-             :on-change   #(reset! new-label (-> % .-target .-value))}]]
+             :on-change   #(reset! new-label (-> % .-target .-value))}]
+           [:br]
+           [form-control
+            [form-control-label
+             {:label "Add inside open drop?"
+              :label-placement "start"
+              :control (r/as-element [switch
+                                      {:checked @add-to-open-drop?
+                                       :on-change #(reset! add-to-open-drop? (-> % .-target .-checked))}])}
+             ]
+            ]]
           [dialog-actions
            [button
             {:on-click   submit-fn
