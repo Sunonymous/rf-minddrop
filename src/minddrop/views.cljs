@@ -220,18 +220,6 @@
        [zoom-in {:font-size "large"}]]
       [modals/jump-to-drop-dialog]]))
 
-(defn banner-source
-  [source-id]
-  [:h2 (let [focused?  @(rf/subscribe [::subs/focus-mode])
-             searching? (seq (:label @(rf/subscribe [::subs/view-params])))
-             global-search? (nil? source-id)]
-         (cond
-           (and focused? searching?) "Focused Drop Search"
-           focused?                  "Focused Drops"
-           searching?                "Search Results"
-           global-search?            "Global Search"
-           :otherwise                (:label @(rf/subscribe [::subs/drop source-id]))))])
-
 (defn drop-banner [drop-id level]
   (let [children @(rf/subscribe [::subs/immediate-children drop-id])
         sorted-children (group-by (fn [[_ drop]] (drop :touched)) children)]
