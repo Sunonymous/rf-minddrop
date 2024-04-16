@@ -20,7 +20,7 @@
    [reagent-mui.icons.add                     :refer [add]]
    [reagent-mui.icons.link                    :refer [link]]
    [reagent-mui.icons.close-outlined          :refer [close-outlined]]
-   [reagent-mui.icons.more-horiz-rounded      :refer [more-horiz-rounded]]
+   [reagent-mui.icons.settings                :refer [settings]]
    [reagent-mui.icons.manage-search           :refer [manage-search]]
    [reagent-mui.icons.sell                    :refer [sell]]
    ;; Minddrop
@@ -240,7 +240,7 @@
        [icon-button
         {:sx {:position "fixed" :top "2rem" :right "2rem"}
          :on-click open-modal!}
-        [more-horiz-rounded {:font-size "large"}]]
+        [settings {:font-size "large"}]]
        [drawer {:open @open?
                 :on-close close-modal!
                 :anchor "right"}
