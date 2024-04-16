@@ -83,6 +83,7 @@
        [text-field
         {:placeholder "(Notes)"
          :multiline   true
+         :max-rows    20
          :value       @live-notes
          :on-input    #(reset! live-notes (-> % .-target .-value))}]
        [:div {:style {:margin "0.25em" :padding "1em"
@@ -108,7 +109,7 @@
                         (rf/dispatch [::events/renote-drop   (drop :id) next-notes]))]
     (if @editing-notes?
       [drop-note-editor (drop :notes) save-notes-fn]
-      [:p (drop :notes)])))
+      [:p {:style {:white-space "pre-wrap"}} (drop :notes)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Major Components ;
