@@ -81,7 +81,8 @@
                      :flex-direction "column"
                      :align-items "center"}}
        [text-field
-        {:placeholder "(Notes)"
+        {:auto-focus  true
+         :placeholder "(Notes)"
          :multiline   true
          :max-rows    20
          :value       @live-notes
