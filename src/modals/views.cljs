@@ -43,12 +43,16 @@
 (defn close-modal! [modal*] (reset! modal* false))
 
 (defn add-drop-dialog []
-  (let [open?          (r/atom false)
-        toggle-modal! #(swap! open? not)
-        new-label      (r/atom "")
+  (let [open?            (r/atom false)
+        toggle-modal!    #(swap! open? not)
+        new-label         (r/atom "")
+        add-to-open-drop? (r/atom false)
+        jump-to-drop?     (r/atom false)
         close-modal!   (fn [] (reset! open? false)
-                              (reset! new-label ""))
-        add-to-open-drop? (r/atom false)]
+                         (reset! new-label "")
+                         (reset! add-to-open-drop? false)
+                         (reset! jump-to-drop? false))
+        ]
     (fn []
       (let [source-id @(rf/subscribe [::subs/source])
             open-id   @(rf/subscribe [::subs/first-in-queue])
@@ -60,7 +64,9 @@
                                             @(rf/subscribe [::subs/next-id])
                                             next-source)]
                              (rf/dispatch [::events/add-drop next-drop])
-                             (rf/dispatch [::events/resonate-drop next-source (constants :inner-boost)]))
+                             (rf/dispatch [::events/resonate-drop next-source (constants :inner-boost)])
+                             (when @jump-to-drop?
+                               (rf/dispatch [::events/prioritize-drop (:id next-drop)])))
                            (close-modal!)))]
         [:<>
          [icon-button
@@ -93,15 +99,28 @@
              :placeholder "Drop Label"
              :on-change   #(reset! new-label (-> % .-target .-value))}]
            [:br]
-           [form-control
-            [form-control-label
-             {:label "Add inside open drop?"
-              :label-placement "start"
-              :control (r/as-element [switch
-                                      {:checked @add-to-open-drop?
-                                       :on-change #(reset! add-to-open-drop? (-> % .-target .-checked))}])}
-             ]
-            ]]
+           (when open-id
+             [:div
+              [form-control {:sx {:float "right"}}
+               [form-control-label
+                {:label (str "Add inside "
+                             (:label @(rf/subscribe [::subs/drop open-id]))
+                             "?")
+                 :label-placement "start"
+                 :disabled (nil? open-id)
+                 :control (r/as-element [switch
+                                         {:checked @add-to-open-drop?
+                                          :on-change #(reset! add-to-open-drop? (-> % .-target .-checked))}])}]]
+              [:br]
+              [form-control {:sx {:float "right"}}
+               [form-control-label
+                {:label "Jump to drop?"
+                 :label-placement "start"
+                 :control (r/as-element [switch
+                                         {:checked @jump-to-drop?
+                                          :on-change #(reset! jump-to-drop? (-> % .-target .-checked))}])}
+                ]
+               ]])]
           [dialog-actions
            [button
             {:on-click   submit-fn
