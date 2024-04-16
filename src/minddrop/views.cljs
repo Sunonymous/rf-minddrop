@@ -9,7 +9,6 @@
    [reagent-mui.material.accordion-summary   :refer [accordion-summary]]
    [reagent-mui.material.accordion-details   :refer [accordion-details]]
    ;; MUI Icons
-   [reagent-mui.icons.delete                  :refer [delete]]
    [reagent-mui.icons.edit                    :refer [edit]]
    [reagent-mui.icons.expand-more             :refer [expand-more]]
    [reagent-mui.icons.visibility              :refer [visibility]]
@@ -40,31 +39,6 @@
 (defonce editing-notes? (r/atom false))
 (defn toggle-note-edit! [] (swap! editing-notes? not))
 (defn stop-editing-notes! [] (reset! editing-notes? false))
-
-;;;;;;;;;;;;;;;;;;;;
-;; Action Buttons ;
-
-;; TODO why this this a function-2 component?
-(defn delete-drop-btn
-  [drop-id]
-  (let [pool   (rf/subscribe [::subs/pool])
-        source (rf/subscribe [::subs/source])]
-    (fn [drop-id]
-      [icon-button
-       {:on-click (fn [_] (let [dependents (pool/dependent-drops @pool drop-id)
-                                confirmation-msg (str "Are you sure you want to delete this drop?\n"
-                                                      (when (seq dependents)
-                                                        (str (count dependents) " inner drop(s) will be deleted.")))
-                                confirmed? (js/confirm confirmation-msg)]
-                            (when confirmed?
-                              (rf/dispatch [::events/discard-prioritized-id])
-                              (doseq [id (conj dependents drop-id)]
-                                (rf/dispatch [::events/remove-drop id]))
-                              (when (nil? (@pool @source)) ;; move back to master if necessary
-                                (rf/dispatch [::events/enter-drop (drop/constants :master-id)])))))
-        :size "small"
-        :aria-label "delete drop"}
-       [delete]])))
 
 ;;;;;;;;;;;;;;;
 ;; Open Drop ;
@@ -148,7 +122,7 @@
         [accordion-details
          [drop-notes-display (:id drop)]]
         [card-actions
-         [delete-drop-btn (:id drop)]
+         [modals/delete-drop-dialog]
          [icon-button
           {:on-click (fn [_]
                        (rf/dispatch [::events/toggle-drop-focus (drop :id)])

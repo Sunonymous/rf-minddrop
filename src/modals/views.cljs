@@ -24,6 +24,7 @@
    [reagent-mui.icons.control-camera          :refer [control-camera]]
    [reagent-mui.icons.manage-search           :refer [manage-search]]
    [reagent-mui.icons.sell                    :refer [sell]]
+   [reagent-mui.icons.delete                  :refer [delete]]
    ;; Minddrop
    [clojure.string  :refer [includes? lower-case]]
    [minddrop.config :as config]
@@ -40,7 +41,6 @@
 
 ;; General functions for reusability
 (defn open-modal!  [modal*] (reset! modal* true))
-(defn close-modal! [modal*] (reset! modal* false))
 
 (defn add-drop-dialog []
   (let [open?            (r/atom false)
@@ -48,10 +48,11 @@
         new-label         (r/atom "")
         add-to-open-drop? (r/atom false)
         jump-to-drop?     (r/atom false)
-        close-modal!   (fn [] (reset! open? false)
-                         (reset! new-label "")
+        close-modal!   (fn []
+                         (reset! open?             false)
+                         (reset! new-label         "")
                          (reset! add-to-open-drop? false)
-                         (reset! jump-to-drop? false))
+                         (reset! jump-to-drop?     false))
         ]
     (fn []
       (let [source-id @(rf/subscribe [::subs/source])
@@ -133,9 +134,13 @@
 (defn drop-tag-dialog []
   (let [open?         (r/atom false)
         open-modal!  #(open-modal! open?)
-        close-modal! #(close-modal! open?)
         selected-tag  (r/atom nil)
-        tag-to-add    (r/atom "")]
+        tag-to-add    (r/atom "")
+        close-modal! (fn []
+                       (reset! open? false)
+                       (reset! selected-tag nil)
+                       (reset! tag-to-add ""))
+        ]
     (fn []
       (let [drop    @(rf/subscribe [::subs/drop @(rf/subscribe [::subs/first-in-queue])])]
         [:<>
@@ -250,7 +255,7 @@
         selected-id   (r/atom nil)
         close-modal! (fn []
                        (reset! selected-id nil)
-                       (close-modal! open?))]
+                       (reset! open? false))]
     (fn []
       [:<>
        [icon-button
@@ -280,7 +285,7 @@
 (defn settings-drawer []
   (let [open?         (r/atom false)
         open-modal!  #(open-modal! open?)
-        close-modal! #(close-modal! open?)]
+        close-modal! #(reset! open? false)]
     (fn []
       [:div
        [icon-button
@@ -337,7 +342,7 @@
         selected-id   (r/atom nil)
         close-modal!  (fn []
                         (reset! selected-id nil)
-                        (close-modal! open?))]
+                        (reset! open? false))]
     (fn []
       (let [drop-id @(rf/subscribe [::subs/first-in-queue])
             drop    @(rf/subscribe [::subs/drop drop-id])]
@@ -364,3 +369,66 @@
                      :aria-label (str "change source of " (:label drop))}
              "Move Drop"]
             [button {:on-click close-modal!} "Close"]]]]]))))
+
+(defn delete-drop-dialog []
+  (let [open?         (r/atom false)
+        open-modal!  #(open-modal! open?)
+        will-rehome?  (r/atom false)
+        next-source   (r/atom nil)
+        close-modal!  (fn []
+                        (reset! open? false)
+                        (reset! will-rehome? false)
+                        (reset! next-source nil))]
+    (fn []
+      (let [drop-id            @(rf/subscribe [::subs/first-in-queue])
+            drop               @(rf/subscribe [::subs/drop drop-id])
+            immediate-children @(rf/subscribe [::subs/immediate-children drop-id])
+            dependents         @(rf/subscribe [::subs/dependent-drops drop-id])
+            delete-fn (fn [] ;; this one's a doozy
+                        (rf/dispatch [::events/discard-prioritized-id])
+                        (if @will-rehome?
+                          (doseq [id (map first immediate-children)]
+                            (rf/dispatch [::events/rehome-drop id @next-source]))
+                          (doseq [id dependents]
+                            (rf/dispatch [::events/remove-drop id])))
+                        (rf/dispatch [::events/remove-drop drop-id]))]
+        [:<>
+         [icon-button
+          {:on-click open-modal!
+           :size "small"
+           :aria-label "open delete drop menu"}
+          [delete]]
+         [dialog
+          {:open     @open?
+           :on-close close-modal!}
+          [dialog-title "Delete Drop?"]
+          [dialog-content
+           [dialog-content-text
+            (str "Do you really want to delete '" (:label drop) "'?")]
+           (when (seq immediate-children)
+             [:div
+              [dialog-content-text
+               (str "It has " (count immediate-children)
+                    " inner drops, with a total of " (count dependents)
+                    " nested drops.")]
+              [form-control {:sx {:float "right"}}
+               [form-control-label
+                {:label (str "Move inner drops to new source?")
+                 :label-placement "start"
+                 :control (r/as-element [switch
+                                         {:checked @will-rehome?
+                                          :on-change #(reset! will-rehome? (-> % .-target .-checked))}])}]]])
+           [:br]
+           (when @will-rehome?
+             [drop-selector next-source])]
+           [dialog-actions
+            [button {:on-click (fn [_]
+                                 (delete-fn)
+                                 (close-modal!))
+                     :disabled (and @will-rehome?
+                                    (nil? @next-source))
+                     :variant    "contained"
+                     :color      "error"
+                     :aria-label (str "change source of " (:label drop))}
+             "Delete Drop"]
+            [button {:on-click close-modal!} "Close"]]]]))))
