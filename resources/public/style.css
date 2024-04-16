@@ -1,3 +1,8 @@
+/* Fonts */
+body {
+    font-family: 'Noto Sans', sans-serif;
+}
+
 /* Remove default button styling */
 button.clean {
 	background: none;
