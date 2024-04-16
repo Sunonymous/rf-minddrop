@@ -226,7 +226,10 @@
     [:div.drop_banner_wrapper
      [(get [:h3 :h4] level) {:style {:margin-left     (str (* level 0.5) "em")
                                      :text-decoration (get ["underline" "none"] level)}}
-      (str (when (pos? level) "↳ ") (:label @(rf/subscribe [::subs/drop drop-id])))]
+      (str (cond
+             (pos? level) "↳ "
+             (= drop-id (drop/constants :master-id)) "★ ")
+           (:label @(rf/subscribe [::subs/drop drop-id])))]
      (when (seq children)
        [:div.drop_indicator_wrapper {:style {:opacity (nth [1 0.25] level)}}
         [:p.drop_indicator         (repeat (count (sorted-children false)) "•")]
