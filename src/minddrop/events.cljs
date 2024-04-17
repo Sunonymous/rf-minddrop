@@ -179,10 +179,18 @@
  (fn [db [_ drop-id]]
    (assoc db :priority-id drop-id)))
 
-(rf/reg-event-fx
+;; using db for this seems wrong, because it doesn't actually change db
+(rf/reg-event-db
  ::export-user-data
- ;; TODO write this function
- (fn [_] 42))
+ (fn [db]
+   (let [pool (db :pool)
+         data-str (str "data:text/edn;charset=utf-8,"
+                       (js/encodeURIComponent (pr-str pool)))
+         anchorElem (js/document.getElementById "downloadDataAnchor")]
+     (set! (.-href anchorElem) data-str)
+     (set! (.-download anchorElem) "minddrop_user_data.edn")
+     (.click anchorElem)
+     db)))
 
 (rf/reg-event-db
  ::delete-user-data

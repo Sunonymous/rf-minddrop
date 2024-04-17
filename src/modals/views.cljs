@@ -341,18 +341,16 @@ pool of drops, eg. setting a drop's source it itself."
            :on-click #(rf/dispatch [::events/unfocus-all-drops])
            :aria-label "unfocus all drops"}
           "Unfocus All Drops"]
-        ;; TODO -- implement
-        ;;  [:h3  "— Save Zone"]
-        ;;  [button
-        ;;   {:sx {:margin "1em 0 1em 0"}
-        ;;    :variant "contained"
-        ;;    :color   "primary"
-        ;;    :on-click (fn [_] (rf/dispatch [::events/export-user-data]))
-        ;;    :aria-label "export user data to file"}
-        ;;   "Export My Data"]
-         [:h3  "— Danger Zone"]
+         [:h3  "— Data"]
          [button
-          {:sx {:margin "1em 0 1em 0"}
+          {:sx {:margin-top "1em"}
+           :variant "contained"
+           :color   "primary"
+           :on-click (fn [_] (rf/dispatch [::events/export-user-data]))
+           :aria-label "export user data to file"}
+          "Export My Data"]
+         [button
+          {:sx {:margin-top "1em"}
            :variant "contained"
            :color   "error"
            :on-click (fn [_]
