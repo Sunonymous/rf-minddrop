@@ -198,56 +198,61 @@
             [button {:on-click close-modal!} "Close"]]]
           ]]))))
 
-;; This component is an inner component used in multiple dialogs. It is
-;; passed a ratom to store and modify the selected drop id.
-(defn drop-selector [selected-id*]
-  (let [labels      @(rf/subscribe [::subs/drop-labels])
-        label-filter (r/atom "")
-        ]
-    (fn [selected-id*]
-      (let [filtered-labels (filter
-                             (fn [[id label]]
-                               (and
-                                (includes? (lower-case label) (lower-case @label-filter))
-                                (not= id (constants :master-id)))) labels)]
-        [:div {:style {:margin-block "1em"
-                       :display "flex"
-                       :flex-direction "column"
-                       :align-items "center"}}
+(defn drop-selector
+  "This component is an inner component used in multiple dialogs. It is passed a ratom
+to store and modify the selected drop id, and an optional sequence of drop ids to exclude
+from the results. This prevents the user from performing actions which would ruin their
+pool of drops, eg. setting a drop's source it itself."
+  ([selected-id*] (drop-selector selected-id* []))
+  ([selected-id* excluded-ids]
+   (let [labels      @(rf/subscribe [::subs/drop-labels])
+         label-filter (r/atom "")]
+     (fn [selected-id* excluded-ids]
+       (let [exclusions      (set excluded-ids)
+             filtered-labels (filter
+                              (fn [[id label]]
+                                (and
+                                 (includes? (lower-case label) (lower-case @label-filter))
+                                 (not (exclusions id))))
+                              labels)]
+         [:div {:style {:margin-block "1em"
+                        :display "flex"
+                        :flex-direction "column"
+                        :align-items "center"}}
          ;; This next line is hacky. I struggled with getting the select
          ;; component to re-render every time the filter changed.
-         [:pre {:style {:display "none"}} (str filtered-labels)]
-         [:div {:style {:display "flex" :align-items "center"}}
-          [text-field
-           {:sx {:margin "1em 0"}
-            :variant     "outlined"
-            :value       @label-filter
-            :size        "small"
-            :placeholder "Filter Labels"
-            :on-change (fn [e]
-                         (reset! label-filter (-> e .-target .-value))
-                         (reset! selected-id* nil))}]
-          [button
-           {:sx {:width "1em"}
-            :on-click #(reset! label-filter "")
-            :aria-label "clear label filter"
-            :disabled (empty? @label-filter)
-            :size "large"}
-           "X"]]
-         (if (empty? filtered-labels)
-           [dialog-content-text "No drops match your search."]
-           [form-control
-            {:sx {:display "block"}
-             :variant "standard"}
-            [input-label {:id "select-drop-input-label"} "Choose a Drop:"]
-            [select
-             {:sx {:min-width "150px"}
-              :label-id  "select-drop-input-label"
-              :disabled  (empty? filtered-labels)
-              :value     (or @selected-id* "")
-              :on-change #(reset! selected-id* (-> % .-target .-value))}
-             (for [[id label] filtered-labels]
-               [menu-item {:key id :value id} label])]])]))))
+          [:pre {:style {:display "none"}} (str filtered-labels)]
+          [:div {:style {:display "flex" :align-items "center"}}
+           [text-field
+            {:sx {:margin "1em 0"}
+             :variant     "outlined"
+             :value       @label-filter
+             :size        "small"
+             :placeholder "Filter Labels"
+             :on-change (fn [e]
+                          (reset! label-filter (-> e .-target .-value))
+                          (reset! selected-id* nil))}]
+           [button
+            {:sx {:width "1em"}
+             :on-click #(reset! label-filter "")
+             :aria-label "clear label filter"
+             :disabled (empty? @label-filter)
+             :size "large"}
+            "X"]]
+          (if (empty? filtered-labels)
+            [dialog-content-text "No drops match your search."]
+            [form-control
+             {:sx {:display "block"}
+              :variant "standard"}
+             [input-label {:id "select-drop-input-label"} "Choose a Drop:"]
+             [select
+              {:sx {:min-width "150px"}
+               :label-id  "select-drop-input-label"
+               :disabled  (empty? filtered-labels)
+               :value     (or @selected-id* "")
+               :on-change #(reset! selected-id* (-> % .-target .-value))}
+              (for [[id label] filtered-labels]
+                [menu-item {:key id :value id} label])]])])))))
 
 (defn jump-to-drop-dialog []
   (let [open?         (r/atom false)
@@ -267,7 +272,7 @@
          :on-close close-modal!}
         [dialog-title "Jump to Drop"]
         [dialog-content
-         [drop-selector selected-id]
+         [drop-selector selected-id [(constants :master-id)]]
          [dialog-actions
           [button {:on-click (fn [_] ;; arrive at drop and set source to drop's source
                                (rf/dispatch [::events/prioritize-drop @selected-id])
@@ -360,7 +365,7 @@
           [dialog-content
            [dialog-content-text
             (str "Select a drop to place " (:label drop) " within.")]
-           [drop-selector selected-id]
+           [drop-selector selected-id [drop-id]]
            [dialog-actions
             [button {:on-click (fn [_]
                                  (rf/dispatch [::events/rehome-drop drop-id @selected-id])
@@ -420,7 +425,7 @@
                                           :on-change #(reset! will-rehome? (-> % .-target .-checked))}])}]]])
            [:br]
            (when @will-rehome?
-             [drop-selector next-source])]
+             [drop-selector next-source [drop-id]])]
            [dialog-actions
             [button {:on-click (fn [_]
                                  (delete-fn)
