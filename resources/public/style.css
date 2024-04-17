@@ -90,6 +90,7 @@ button.clean {
     border-bottom: 1px solid black;
     border-radius: 8px;
     display: flex;
+    user-select: none;
 }
 
 .drop_indicator {
