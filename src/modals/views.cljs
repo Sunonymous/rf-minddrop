@@ -342,6 +342,23 @@ pool of drops, eg. setting a drop's source it itself."
            :aria-label "unfocus all drops"}
           "Unfocus All Drops"]
          [:h3  "— Data"]
+         ;; TODO get the functions in this component a little more isolated
+         [:input {:id "uploadInput" :style {:display "none"}
+                  :type "file" :accept ".edn"
+                  :on-change (fn [e] (let [reader (js/FileReader.)
+                                           file   (-> e .-target .-files (aget 0))]
+                                       (set! (.-onload reader)
+                                             (fn [e]
+                                               (let [result (-> e .-target .-result)]
+                                                 (rf/dispatch [::events/load-pool-from-string result]))))
+                                       (-> reader (.readAsText file))))}]
+         [button
+          {:sx {:margin-top "1em"}
+           :variant "contained"
+           :color   "secondary"
+           :on-click (fn [_] (-> (js/document.getElementById "uploadInput") .click))
+           :aria-label "load user data from file"}
+          "Load Data"]
          [button
           {:sx {:margin-top "1em"}
            :variant "contained"
