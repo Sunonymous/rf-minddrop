@@ -206,43 +206,72 @@ pool of drops, eg. setting a drop's source it itself."
   ([selected-id*] (drop-selector selected-id* []))
   ([selected-id* excluded-ids]
    (let [labels      @(rf/subscribe [::subs/drop-labels])
+         tags        @(rf/subscribe [::subs/all-drop-tags])
+         tag-filter   (r/atom "")
          label-filter (r/atom "")]
      (fn [selected-id* excluded-ids]
        (let [exclusions      (set excluded-ids)
              filtered-labels (filter
                               (fn [[id label]]
-                                (and
+                                (and ;; TODO this is inefficient. better to include the labels/tags in a single sub
+                                 (not (exclusions id))
                                  (includes? (lower-case label) (lower-case @label-filter))
-                                 (not (exclusions id))))
+                                 (if (seq @tag-filter)
+                                   (drop/has-tag? @tag-filter @(rf/subscribe [::subs/drop id]))
+                                   true))) ;; only use the last filter when tag is selected
                               labels)]
          [:div {:style {:margin-block "1em"
+                        :border "1px solid lightgray"
+                        :border-radius "8px"
+                        :padding "1em 0 1em 1em"
                         :display "flex"
                         :flex-direction "column"
                         :align-items "center"}}
          ;; This next line is hacky. I struggled with getting the select
          ;; component to re-render every time the filter changed.
           [:pre {:style {:display "none"}} (str filtered-labels)]
-          [:div {:style {:display "flex" :align-items "center"}}
-           [text-field
-            {:sx {:margin "1em 0"}
-             :variant     "outlined"
-             :value       @label-filter
-             :size        "small"
-             :placeholder "Filter Labels"
-             :on-change (fn [e]
-                          (reset! label-filter (-> e .-target .-value))
-                          (reset! selected-id* nil))}]
-           [button
-            {:sx {:width "1em"}
-             :on-click #(reset! label-filter "")
-             :aria-label "clear label filter"
-             :disabled (empty? @label-filter)
-             :size "large"}
-            "X"]]
+          [:div
+           {:style {:display "flex"
+                    :flex-direction "column"
+                    :justify-content "space-around"
+                    :align-items "flex-end"}}
+           [:div {:style {:display "flex" :align-items "center"}}
+            [text-field
+             {:sx {:margin-block "1em"}
+              :variant     "outlined"
+              :value       @label-filter
+              :size        "small"
+              :placeholder "Filter Labels"
+              :on-change (fn [e]
+                           (reset! label-filter (-> e .-target .-value))
+                           (reset! selected-id* nil))}]
+            [button
+             {:on-click #(reset! label-filter "")
+              :aria-label "clear label filter"
+              :disabled (empty? @label-filter)
+              :size "large"}
+             "X"]]
+           (when (seq tags)
+             [:div
+              [form-control {:sx {:display "block"} :variant "standard"}
+               [input-label {:id "select-tag-input-label"} "Tagged with:"]
+               [select
+                {:sx {:min-width "150px"}
+                 :label-id  "select-drop-input-label"
+                 :value     (or @tag-filter "")
+                 :on-change #(reset! tag-filter (-> % .-target .-value))}
+                (for [tag tags]
+                  [menu-item {:key tag :value tag} tag])]
+               [button
+                {:on-click #(reset! tag-filter nil)
+                 :aria-label "clear tag filter"
+                 :disabled (empty? @tag-filter)
+                 :size "large"}
+                "X"]]])]
           (if (empty? filtered-labels)
             [dialog-content-text "No drops match your search."]
             [form-control
-             {:sx {:display "block"}
+             {:sx {:display "block" :margin-top "1em"}
               :variant "standard"}
              [input-label {:id "select-drop-input-label"} "Choose a Drop:"]
              [select
