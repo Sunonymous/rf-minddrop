@@ -56,6 +56,9 @@
   [s drop]
   (includes? (lower-case (:label drop)) (lower-case s)))
 
+(defn has-tag? [tag drop]
+  (some #{tag} (:tags drop)))
+
 ;;;;;;;;;;;;;
 ;; Actions ;
 
