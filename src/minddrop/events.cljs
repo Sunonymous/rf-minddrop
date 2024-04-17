@@ -180,6 +180,7 @@
    (assoc db :priority-id drop-id)))
 
 ;; using db for this seems wrong, because it doesn't actually change db
+;; TODO move this into a function on the actual component
 (rf/reg-event-db
  ::export-user-data
  (fn [db]
