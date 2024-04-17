@@ -1,13 +1,12 @@
 (ns minddrop.core
   (:require
    [minddrop.db     :as db :refer [default-view-params]]
-   [reagent.dom     :as rdom]
    [re-frame.core   :as re-frame]
    [minddrop.events :as events]
-   [minddrop.views  :as views]
    [minddrop.config :as config]
+   [minddrop.views  :as views]
+   [reagent.dom     :as rdom]
    [pool.core       :as pool]))
-
 
 (defn dev-setup []
   (when config/debug?
