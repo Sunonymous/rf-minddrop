@@ -103,11 +103,11 @@
         (map first)
         vec)))
 
-;; Provides a set of all the links contained throughout the pool.
+;; Provides a set of all the tags contained throughout the pool.
 (rf/reg-sub
- ::all-drop-links
+ ::all-drop-tags
  (fn [] (rf/subscribe [::pool]))
- (fn [pool] (->> (map (fn [[_ drop]] (:links drop)) pool)
+ (fn [pool] (->> (map (fn [[_ drop]] (:tags drop)) pool)
                  (remove empty?)
                  (map vec)
                  flatten
