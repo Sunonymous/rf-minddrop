@@ -144,7 +144,7 @@
              :size "small"}
             [notes]])
          [modals/drop-tag-dialog]
-         [modals/move-drop-modal]
+         [modals/move-drop-dialog]
          ]]]))
 
 (defn navigation-controls

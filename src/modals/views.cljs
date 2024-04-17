@@ -341,7 +341,7 @@ pool of drops, eg. setting a drop's source it itself."
           [close-outlined]]]]]
       )))
 
-(defn move-drop-modal []
+(defn move-drop-dialog []
   (let [open?         (r/atom false)
         open-modal!  #(open-modal! open?)
         selected-id   (r/atom nil)
