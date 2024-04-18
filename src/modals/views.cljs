@@ -46,8 +46,8 @@
   (let [open?            (r/atom false)
         toggle-modal!    #(swap! open? not)
         new-label         (r/atom "")
-        add-to-open-drop? (r/atom false)
-        jump-to-drop?     (r/atom false)
+        add-to-open-drop? (r/atom (config/of :add-inside-open-drop)) ;; only adjusts after page reload...
+        jump-to-drop?     (r/atom false)                             ;; TODO add indication of this
         close-modal!   (fn []
                          (reset! open?             false)
                          (reset! new-label         "")
@@ -107,6 +107,7 @@
                 {:label (str "Add inside "
                              (:label @(rf/subscribe [::subs/drop open-id]))
                              "?")
+                 :value @add-to-open-drop?
                  :label-placement "start"
                  :disabled (nil? open-id)
                  :control (r/as-element [switch
@@ -358,6 +359,7 @@ pool of drops, eg. setting a drop's source it itself."
            :aria-label "unfocus all drops"}
           "Unfocus All Drops"]
          [setting-toggle-boolean :prefill-relabel]
+         [setting-toggle-boolean :add-inside-open-drop]
          [:h3  "— Data"]
          ;; TODO get the functions in this component a little more isolated
          [:input {:id "uploadInput" :style {:display "none"}
