@@ -3,5 +3,5 @@
 (defn prompt-string
   "Prompt the user for a string and trim it.
    Returns an empty string for invalid or empty input."
-  [query]
-  (.trim (or (js/prompt query) "")))
+  ([query] (.trim (or (js/prompt query "") "")))
+  ([query default] (.trim (or (js/prompt query default) ""))))
