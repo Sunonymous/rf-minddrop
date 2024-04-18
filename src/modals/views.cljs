@@ -306,12 +306,14 @@ pool of drops, eg. setting a drop's source it itself."
          [dialog-actions
           [button {:on-click (fn [_] ;; arrive at drop and set source to drop's source
                                (rf/dispatch [::events/prioritize-drop @selected-id])
+                               (rf/dispatch [::events/update-view-params :focused false])
                                (rf/dispatch [::events/update-view-params :source
                                              (:source @(rf/subscribe [::subs/drop @selected-id]))])
                                (close-modal!))
                    :disabled (not @selected-id)} "Jump to"]
           [button {:on-click (fn [_] ;; set source to drop's id and deprioritize any prior drops
                                (rf/dispatch [::events/update-view-params :source @selected-id])
+                               (rf/dispatch [::events/update-view-params :focused false])
                                (rf/dispatch [::events/discard-prioritized-id])
                                (close-modal!))
                    :disabled (not @selected-id)} "Jump in"]
