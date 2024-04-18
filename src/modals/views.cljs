@@ -16,6 +16,7 @@
    [reagent-mui.material.menu-item            :refer [menu-item]]
    [reagent-mui.material.drawer               :refer [drawer]]
    [reagent-mui.material.switch               :refer [switch]]
+   [reagent-mui.material.tooltip              :refer [tooltip]]
    ;; MUI Icons
    [reagent-mui.icons.add                     :refer [add]]
    [reagent-mui.icons.link                    :refer [link]]
@@ -323,15 +324,18 @@ pool of drops, eg. setting a drop's source it itself."
   [setting-kw]
   (let [active? (r/atom (config/of setting-kw))]
     (fn [setting-kw]
-      [form-control
-       [form-control-label
-        {:label (config/names setting-kw)
-         :label-placement "start"
-         :control (r/as-element [switch
-                                 {:checked @active?
-                                  :on-change (fn [e]
-                                               (reset! active? (-> e .-target .-checked))
-                                               (rf/dispatch [::events/config-as setting-kw @active?]))}])}]])))
+      [tooltip {:title (config/descriptions setting-kw)
+                :arrow true}
+       [form-control
+        [form-control-label
+         {:label (config/names setting-kw)
+          :label-placement "start"
+          :control (r/as-element [switch
+                                  {:checked @active?
+                                   :on-change
+                                   (fn [e]
+                                     (reset! active? (-> e .-target .-checked))
+                                     (rf/dispatch [::events/config-as setting-kw @active?]))}])}]]])))
 
 (defn settings-drawer []
   (let [open?         (r/atom false)
