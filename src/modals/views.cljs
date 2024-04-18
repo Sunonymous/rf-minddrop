@@ -349,55 +349,58 @@ pool of drops, eg. setting a drop's source it itself."
                        :flex-direction "column"
                        :padding "2em 3em"}}
          [:h2  "Settings"]
-         [:h3  "— General"]
-         [setting-toggle-boolean :confirm-before-action]
-         [:h3  "— Drops"]
-         [button
-          {:sx {:margin "1em 0 1em 0"}
-           :variant "outlined"
-           :on-click #(rf/dispatch [::events/unfocus-all-drops])
-           :aria-label "unfocus all drops"}
-          "Unfocus All Drops"]
-         [setting-toggle-boolean :prefill-relabel]
-         [setting-toggle-boolean :add-inside-open-drop]
-         [:h3  "— Data"]
+         [:div.settings_group
+          [:h3  "— General"]
+          [setting-toggle-boolean :confirm-before-action]]
+         [:div.settings_group
+          [:h3  "— Drops"]
+          [button
+           {:sx {:margin "1em 0 1em 0"}
+            :variant "outlined"
+            :on-click #(rf/dispatch [::events/unfocus-all-drops])
+            :aria-label "unfocus all drops"}
+           "Unfocus All Drops"]
+          [setting-toggle-boolean :prefill-relabel]
+          [setting-toggle-boolean :add-inside-open-drop]]
+         [:div.settings_group
+          [:h3  "— Data"]
          ;; TODO get the functions in this component a little more isolated
-         [:input {:id "uploadInput" :style {:display "none"}
-                  :type "file" :accept ".edn"
-                  :on-change (fn [e] (let [reader (js/FileReader.)
-                                           file   (-> e .-target .-files (aget 0))]
-                                       (set! (.-onload reader)
-                                             (fn [e]
-                                               (let [result (-> e .-target .-result)
-                                                     confirmed? (if (config/of :confirm-before-action)
-                                                                  (js/confirm "Are you sure you want load new data? This replaces all active data when the file is valid.")
-                                                                  true)]
-                                                 (when confirmed? (rf/dispatch [::events/load-pool-from-string result])))))
-                                       (-> reader (.readAsText file))))}]
-         [button
-          {:sx {:margin-top "1em"}
-           :variant "contained"
-           :color   "secondary"
-           :on-click (fn [_] (-> (js/document.getElementById "uploadInput") .click))
-           :aria-label "load user data from file"}
-          "Load Data"]
-         [button
-          {:sx {:margin-top "1em"}
-           :variant "contained"
-           :color   "primary"
-           :on-click (fn [_] (rf/dispatch [::events/export-user-data]))
-           :aria-label "export user data to file"}
-          "Export My Data"]
-         [button
-          {:sx {:margin-top "1em"}
-           :variant "contained"
-           :color   "error"
-           :on-click (fn [_]
-                       (let [confirmed? (js/confirm "Are you sure you want to delete all data? This cannot be undone.")]
-                         (when confirmed?
-                           (rf/dispatch [::events/delete-user-data]))))
-           :aria-label "delete user data"}
-          "Delete My Data"]
+          [:input {:id "uploadInput" :style {:display "none"}
+                   :type "file" :accept ".edn"
+                   :on-change (fn [e] (let [reader (js/FileReader.)
+                                            file   (-> e .-target .-files (aget 0))]
+                                        (set! (.-onload reader)
+                                              (fn [e]
+                                                (let [result (-> e .-target .-result)
+                                                      confirmed? (if (config/of :confirm-before-action)
+                                                                   (js/confirm "Are you sure you want load new data? This replaces all active data when the file is valid.")
+                                                                   true)]
+                                                  (when confirmed? (rf/dispatch [::events/load-pool-from-string result])))))
+                                        (-> reader (.readAsText file))))}]
+          [button
+           {:sx {:margin-top "1em"}
+            :variant "contained"
+            :color   "secondary"
+            :on-click (fn [_] (-> (js/document.getElementById "uploadInput") .click))
+            :aria-label "load user data from file"}
+           "Load Data"]
+          [button
+           {:sx {:margin-top "1em"}
+            :variant "contained"
+            :color   "primary"
+            :on-click (fn [_] (rf/dispatch [::events/export-user-data]))
+            :aria-label "export user data to file"}
+           "Export My Data"]
+          [button
+           {:sx {:margin-top "1em"}
+            :variant "contained"
+            :color   "error"
+            :on-click (fn [_]
+                        (let [confirmed? (js/confirm "Are you sure you want to delete all data? This cannot be undone.")]
+                          (when confirmed?
+                            (rf/dispatch [::events/delete-user-data]))))
+            :aria-label "delete user data"}
+           "Delete My Data"]]
          [icon-button
           {:sx {:margin-top "auto"
                 :margin-inline "auto"

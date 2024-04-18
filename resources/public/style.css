@@ -102,3 +102,13 @@ button.clean {
     font-size: 1.55rem;
     line-height: 87%;
 }
+
+.settings_group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0.5em;
+    padding: 1em;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+}
