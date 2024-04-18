@@ -432,8 +432,12 @@ pool of drops, eg. setting a drop's source it itself."
            [drop-selector selected-id [drop-id]]
            [dialog-actions
             [button {:on-click (fn [_]
-                                 (rf/dispatch [::events/rehome-drop drop-id @selected-id])
-                                 (close-modal!))
+                                 (let [confirmed? (if (config/of :confirm-before-action)
+                                                    (js/confirm (str "Are you sure you want to move " (:label drop) " to another source?"))
+                                                    true)]
+                                   (when confirmed?
+                                     (rf/dispatch [::events/rehome-drop drop-id @selected-id])
+                                     (close-modal!))))
                      :disabled (not @selected-id)
                      :aria-label (str "change source of " (:label drop))}
              "Move Drop"]
