@@ -199,6 +199,7 @@
      (set! (.-href anchorElem) data-str)
      (set! (.-download anchorElem) "minddrop_user_data.edn")
      (.click anchorElem)
+     (js/alert "Data has been downloaded to 'minddrop_user_data.edn'")
      db)))
 
 (rf/reg-event-db
