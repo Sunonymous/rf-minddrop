@@ -49,8 +49,7 @@
    :untouched true})
 
 (def default-db
-  {:user   "me"
-   :pool   {(constants :master-id) (new-drop
+  {:pool   {(constants :master-id) (new-drop
                                     (constants :master-label)
                                     (constants :master-id)
                                     (constants :master-id))}
