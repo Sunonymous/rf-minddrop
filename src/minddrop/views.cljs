@@ -191,7 +191,10 @@
   "Allows the user to navigate their pool of drops
    or add a new drop."
   []
-  (let [source     @(rf/subscribe [::subs/source])
+  (let [priority-id @(rf/subscribe [::subs/priority-id])
+        source     (if priority-id
+                     (@(rf/subscribe [::subs/drop priority-id]) :source)
+                     @(rf/subscribe [::subs/source]))
         drop-id    @(rf/subscribe [::subs/first-in-queue])]
      [:div#navigation_controls
       [icon-button
@@ -225,11 +228,10 @@
        [arrow-right-alt {:font-size "large"}]]
       [icon-button {:on-click (fn [_]
                                 (rf/dispatch [::events/update-view-params :source drop-id])
-                                (rf/dispatch [::events/discard-prioritized-id]))
-                    :size "large"
-                    :disabled (or
-                               (not drop-id)
-                               @(rf/subscribe [::subs/focus-mode]))
+                                (rf/dispatch [::events/discard-prioritized-id])
+                                (rf/dispatch [::events/update-view-params :focused false]))
+                    :size       "large"
+                    :disabled   (not drop-id)
                     :aria-label "enter drop"}
        [zoom-in {:font-size "large"}]]
       [modals/jump-to-drop-dialog]]))
@@ -253,11 +255,14 @@
 ;; App ;
 
 (defn minddrop []
-  (let [drop-id     @(rf/subscribe [::subs/first-in-queue])]
+  (let [drop-id      @(rf/subscribe [::subs/first-in-queue])
+        real-source (or ;; when a drop is open, show its source. otherwise source is in view params
+                     (:source @(rf/subscribe [::subs/drop drop-id]))
+                     @(rf/subscribe [::subs/source]))]
     [:div#minddrop
      [modals/settings-drawer]
      [:div
-      [drop-banner @(rf/subscribe [::subs/source]) 0]
+      [drop-banner real-source 0]
       (when drop-id
         [drop-banner drop-id 1])]
      [:div#drop-display
