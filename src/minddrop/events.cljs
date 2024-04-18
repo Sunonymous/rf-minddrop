@@ -6,7 +6,8 @@
    [drop.core          :as drop]
    [pool.core          :as pool]
    [re-frame.core      :as rf]
-   [minddrop.db        :as db]))
+   [minddrop.db        :as db]
+   [minddrop.config :as config]))
 
 ;;;;;;;;;;;;;;;;;;;
 ;; DB Validation ;
@@ -33,13 +34,21 @@
 
 (def local-storage-key "minddrop_pool")
 
+(defn config->local-storage
+  "Writes the user configuration to local storage."
+  [db]
+  (let [json (pr-str (:config db))]
+    (js/localStorage.setItem config/local-storage-key json)))
+
 (defn pool->local-storage
   "Writes the given pool to local storage."
   [db]
   (let [json (pr-str (:pool db))]
     (js/localStorage.setItem local-storage-key json)))
 
-(def ->local-storage (rf/after pool->local-storage))
+(def ->local-storage    (rf/after pool->local-storage))
+;; bad naming here... this was done instead of renaming all the prior function invocations
+(def cfg->local-storage (rf/after config->local-storage))
 
 (rf/reg-cofx
  :local-store
@@ -164,8 +173,11 @@
 ;;;;;;;;;;;;
 ;; Config ;
 
+;; it's unnecessary with such a short config, though if the new value matches
+;; the value of the default setting, it just just dissoc the kw in the user config
 (rf/reg-event-db
  ::config-as
+ [cfg->local-storage]
  (fn [db [_ setting val]]
    (assoc-in db [:config setting] val)))
 
