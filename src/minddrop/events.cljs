@@ -56,6 +56,14 @@
    (assoc coeffects :local-store
           (js->clj (.getItem js/localStorage storage-key)))))
 
+;; there was an attempt to combine this and the previous function,
+;; though I ran into so many ambiguous errors, I chose the simpler approach
+(rf/reg-cofx
+ :local-config
+ (fn [coeffects storage-key]
+   (assoc coeffects :local-config
+          (js->clj (.getItem js/localStorage storage-key)))))
+
 (rf/reg-event-db
  ::rebuild-queue
  (fn [db [_ filter-predicate]]
@@ -68,14 +76,18 @@
 
 (rf/reg-event-fx
  ::initialize-db
- [(rf/inject-cofx :local-store local-storage-key)]
+ [(rf/inject-cofx :local-store local-storage-key)
+  (rf/inject-cofx :local-config config/local-storage-key)]
  (fn [cofx _]
    (let [initial-db     db/default-db
-         persisted-pool (read-string (:local-store cofx))]
-     (if (and persisted-pool
-              (s/valid? ::minddrop.db/pool persisted-pool))
-       (assoc cofx :db (assoc initial-db :pool persisted-pool))
-       (assoc cofx :db initial-db)))))
+         persisted-config (read-string (:local-config cofx))
+         persisted-pool   (read-string (:local-store cofx))
+         valid-config     (or persisted-config {}) ;; at this point, validation is unnecessary
+         valid-pool       (if (and persisted-pool (s/valid? ::minddrop.db/pool persisted-pool))
+                            persisted-pool
+                            (:pool initial-db))
+         next-db-parts {:pool valid-pool :config valid-config}]
+       (assoc cofx :db (merge initial-db next-db-parts)))))
 
 ;; this was used to debug
 (rf/reg-event-db
