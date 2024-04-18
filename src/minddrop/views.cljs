@@ -55,6 +55,7 @@
          :placeholder "(Notes)"
          :multiline   true
          :max-rows    20
+         :full-width  true
          :value       @live-notes
          :input-props {:max-length 500}
          :on-input    #(reset! live-notes (-> % .-target .-value))}]
@@ -65,12 +66,14 @@
                       (save-fn @live-notes)
                       (toggle-note-edit!))
           :size "small"
-          :aria-label "save notes"}
+          :aria-label "save notes"
+          :sx {:margin-right "1.25em"}}
          [save]]
         [icon-button
          {:on-click toggle-note-edit!
           :size "small"
-          :aria-label "cancel editing notes"}
+          :aria-label "cancel editing notes"
+          :sx {:margin-left "1.25em"}}
          [close]]]])))
 
 (defn drop-notes-display
@@ -104,7 +107,7 @@
           {:on-click #(rf/dispatch [::events/refresh-focused-drops])
            :aria-label "refresh focused drops"}
           [autorenew-outlined {:font-size "large"}]]
-         [:p "No drops are focused or nothing matches your search."])
+         [:p "No drops are focused."])
        :otherwise
        [:p "No drop to display!"])]))
 
