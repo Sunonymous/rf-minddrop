@@ -160,7 +160,9 @@
             [visibility-off-outlined])]
          [icon-button
           {:on-click (fn [_]
-                       (let [next-label (util/prompt-string "New label?")]
+                       (let [next-label (util/prompt-string "New label?" (if (config/of :prefill-relabel)
+                                                                           (:label drop)
+                                                                           ""))]
                          (when (seq next-label)
                            (rf/dispatch [::events/relabel-drop (:id drop) next-label]))))
            :size "small"}

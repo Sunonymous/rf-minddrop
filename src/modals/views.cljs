@@ -316,6 +316,20 @@ pool of drops, eg. setting a drop's source it itself."
                    :disabled (not @selected-id)} "Jump in"]
           [button {:on-click close-modal!} "Close"]]]]])))
 
+(defn setting-toggle-boolean
+  [setting-kw]
+  (let [active? (r/atom (config/of setting-kw))]
+    (fn [setting-kw]
+      [form-control
+       [form-control-label
+        {:label (config/names setting-kw)
+         :label-placement "start"
+         :control (r/as-element [switch
+                                 {:checked @active?
+                                  :on-change (fn [e]
+                                               (reset! active? (-> e .-target .-checked))
+                                               (rf/dispatch [::events/config-as setting-kw @active?]))}])}]])))
+
 (defn settings-drawer []
   (let [open?         (r/atom false)
         open-modal!  #(open-modal! open?)
@@ -341,6 +355,7 @@ pool of drops, eg. setting a drop's source it itself."
            :on-click #(rf/dispatch [::events/unfocus-all-drops])
            :aria-label "unfocus all drops"}
           "Unfocus All Drops"]
+         [setting-toggle-boolean :prefill-relabel]
          [:h3  "— Data"]
          ;; TODO get the functions in this component a little more isolated
          [:input {:id "uploadInput" :style {:display "none"}
