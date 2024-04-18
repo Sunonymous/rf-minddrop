@@ -8,6 +8,8 @@
    [reagent-mui.material.accordion           :refer [accordion]]
    [reagent-mui.material.accordion-summary   :refer [accordion-summary]]
    [reagent-mui.material.accordion-details   :refer [accordion-details]]
+   [reagent-mui.material.snackbar            :refer [snackbar]]
+   [reagent-mui.material.snackbar-content    :refer [snackbar-content]]
    ;; MUI Icons
    [reagent-mui.icons.edit                    :refer [edit]]
    [reagent-mui.icons.expand-more             :refer [expand-more]]
@@ -39,6 +41,28 @@
 (defonce editing-notes? (r/atom false))
 (defn toggle-note-edit! [] (swap! editing-notes? not))
 (defn stop-editing-notes! [] (reset! editing-notes? false))
+
+;;;;;;;;;;;
+;; Toast ;
+
+(defn toast [message]
+  (let [open? (r/atom false)
+        handle-close! #(reset! open? false)]
+    (fn [message]
+      [:<>
+       [snackbar
+        {:open   @open?
+         :auto-hide-duration 1500
+         :on-close handle-close!
+         :message message
+         :action (r/as-element
+                  [icon-button
+                   {:size "small"
+                    :aria-label "close"
+                    :color "inherit"
+                    :on-click handle-close!}
+                   [close {:font-size "small"}]])}
+        ]])))
 
 ;;;;;;;;;;;;;;;
 ;; Open Drop ;
