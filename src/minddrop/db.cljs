@@ -25,6 +25,9 @@
 (s/def ::untouched boolean?)
 (s/def ::view-params (s/keys :req-un [::source ::focused ::untouched]))
 
+; Config
+(s/def ::config map?)
+
 ; DB
 ;; Priority ID is the ID that is shown first as long as it is not nil. If it has the value
 ;; of a particular drop ID, it will always be the first drop shown.
@@ -34,7 +37,7 @@
                             (s/valid? ::id   id)
                             (s/valid? ::drop drop)))))
 ; DB-full
-(s/def ::db (s/keys :req-un [::pool ::view-params ::priority-id]))
+(s/def ::db (s/keys :req-un [::pool ::view-params ::priority-id ::config]))
 
 ;;;;;;;;;;;;;;
 ;; Defaults ;
@@ -52,4 +55,5 @@
                                     (constants :master-id)
                                     (constants :master-id))}
    :view-params default-view-params
+   :config {}
    :priority-id nil})

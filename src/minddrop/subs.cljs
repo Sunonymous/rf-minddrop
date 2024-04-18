@@ -6,6 +6,10 @@
    [drop.core :as drop]))
 
 (rf/reg-sub
+ ::config
+ (fn [db] (:config db)))
+
+(rf/reg-sub
  ::pool
  (fn [db] (:pool db)))
 

@@ -161,6 +161,14 @@
  (fn [db]
    (update db :pool (partial pool/do-to-drops drop/untouch #(drop/is-focused? %)))))
 
+;;;;;;;;;;;;
+;; Config ;
+
+(rf/reg-event-db
+ ::config-as
+ (fn [db [_ setting val]]
+   (assoc-in db [:config setting] val)))
+
 ;;;;;;;;
 ;; DB ;
 
