@@ -77,7 +77,7 @@
                   (s/valid? ::minddrop.db/pool next-pool))
            (assoc db :pool next-pool)
            (do
-             (js/alert "Invalid pool data.")
+             (js/alert "Invalid drop data.")
              db)))))
 
 ;;;;;;;;;;;
