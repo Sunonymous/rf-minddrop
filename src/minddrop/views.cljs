@@ -87,14 +87,25 @@
                       :border-bottom "1px solid black"}}
         [icon-button
          {:on-click (fn [_]
-                      (save-fn @live-notes)
-                      (toggle-note-edit!))
+                      (if (config/of :confirm-before-action)
+                        (when (js/confirm "Save changes?")
+                          (save-fn @live-notes)
+                          (toggle-note-edit!))
+                        (do
+                          (save-fn @live-notes)
+                          (toggle-note-edit!)))
+                      )
           :size "small"
           :aria-label "save notes"
           :sx {:margin-right "1.25em"}}
          [save]]
         [icon-button
-         {:on-click toggle-note-edit!
+         {:on-click (fn [_]
+                      (if (config/of :confirm-before-action)
+                        (when (js/confirm "Discard changes?")
+                          (toggle-note-edit!))
+                        (toggle-note-edit!))
+                      )
           :size "small"
           :aria-label "cancel editing notes"
           :sx {:margin-left "1.25em"}}

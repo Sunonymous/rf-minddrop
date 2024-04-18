@@ -348,6 +348,8 @@ pool of drops, eg. setting a drop's source it itself."
                        :flex-direction "column"
                        :padding "2em 3em"}}
          [:h2  "Settings"]
+         [:h3  "— General"]
+         [setting-toggle-boolean :confirm-before-action]
          [:h3  "— Drops"]
          [button
           {:sx {:margin "1em 0 1em 0"}
@@ -364,8 +366,11 @@ pool of drops, eg. setting a drop's source it itself."
                                            file   (-> e .-target .-files (aget 0))]
                                        (set! (.-onload reader)
                                              (fn [e]
-                                               (let [result (-> e .-target .-result)]
-                                                 (rf/dispatch [::events/load-pool-from-string result]))))
+                                               (let [result (-> e .-target .-result)
+                                                     confirmed? (if (config/of :confirm-before-action)
+                                                                  (js/confirm "Are you sure you want load new data? This replaces all active data when the file is valid.")
+                                                                  true)]
+                                                 (when confirmed? (rf/dispatch [::events/load-pool-from-string result])))))
                                        (-> reader (.readAsText file))))}]
          [button
           {:sx {:margin-top "1em"}
