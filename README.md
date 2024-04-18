@@ -8,7 +8,7 @@ Minddrop is an application to keep your mind organized. It is an organizer of pr
 
 Our minds connect with an incredible amount of ideas and inspirations and it can be challenging to navigate them in an efficient or effective way. That is what Minddrop is designed to assist with.
 
-The name Minddrop has two meanings behind it. The first comes from the idea of the mind as a fluid medium, akin to a cloud of water. The application will *drop* your ideas in front of you one by one, just as a pipette drops liquids. The application is intended to allow you to *drop* the effort of keeping track of your interests and actions. So go ahead—drop your mind.
+The name Minddrop has two meanings behind it. The first comes from the idea of the mind as a fluid medium, akin to a cloud of water. The application will *drop* your ideas in front of you one by one, just as a pipette drops liquids. The application is intended to allow you to *drop* the effort of keeping track of your interests and actions. So go ahead—[drop your mind](https://dropyourmind.com/).
 
 ## Manifesto
 ### Respect the Limits of Attention
