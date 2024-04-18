@@ -379,7 +379,7 @@ pool of drops, eg. setting a drop's source it itself."
           [setting-toggle-boolean :prefill-relabel]
           [setting-toggle-boolean :add-inside-open-drop]]
          [:div.settings_group
-          [:h3  "— Data"]
+          [:h3  "— User Data"]
          ;; TODO get the functions in this component a little more isolated
           [:input {:id "uploadInput" :style {:display "none"}
                    :type "file" :accept ".edn"
@@ -399,14 +399,14 @@ pool of drops, eg. setting a drop's source it itself."
             :color   "secondary"
             :on-click (fn [_] (-> (js/document.getElementById "uploadInput") .click))
             :aria-label "load user data from file"}
-           "Load Data"]
+           "Load"]
           [button
            {:sx {:margin-top "1em"}
             :variant "contained"
             :color   "primary"
             :on-click (fn [_] (rf/dispatch [::events/export-user-data]))
             :aria-label "export user data to file"}
-           "Export My Data"]
+           "Export to File"]
           [button
            {:sx {:margin-top "1em"}
             :variant "contained"
@@ -416,7 +416,7 @@ pool of drops, eg. setting a drop's source it itself."
                           (when confirmed?
                             (rf/dispatch [::events/delete-user-data]))))
             :aria-label "delete user data"}
-           "Delete My Data"]]
+           "Delete"]]
          [icon-button
           {:sx {:margin-top "auto"
                 :margin-inline "auto"
