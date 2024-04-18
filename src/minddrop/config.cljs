@@ -21,7 +21,7 @@
    :prefill-relabel             "Prefills the relabel dialog with the current label when true."
    :navigate-from-focused-drops "Allows entering and exiting drops from focused mode."
    :confirm-before-action       "Ensures the user wishes to perform an action before proceeding."
-   :add-inside-open-drop        "Defaults to adding new drops inside the open drop instead of the source."})
+   :add-inside-open-drop        "Default to adding new drops inside the open drop instead of the source. Requires page reload."})
 
 (def default-config {:user                        "me"
                      :prefill-relabel             true
