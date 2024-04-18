@@ -355,6 +355,16 @@ pool of drops, eg. setting a drop's source it itself."
          [:div.settings_group
           [:h3  "— Drops"]
           [button
+           {:sx {:margin "1em 0 0 0"}
+            :variant "outlined"
+            :on-click (fn [_]
+                        (let [next-label (util/prompt-string "New label?")]
+                          (when (seq next-label)
+                            (rf/dispatch [::events/relabel-drop (constants :master-id) next-label])
+                            (js/alert (str "Master drop relabeled to " next-label "!")))))
+            :aria-label "relabel master drop"}
+           "Relabel Master Drop"]
+          [button
            {:sx {:margin "1em 0 1em 0"}
             :variant "outlined"
             :on-click #(rf/dispatch [::events/unfocus-all-drops])
