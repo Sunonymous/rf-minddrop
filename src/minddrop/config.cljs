@@ -5,7 +5,7 @@
 (def debug?
   ^boolean goog.DEBUG)
 
-(def config-local-storage-key "minddrop_config")
+(def local-storage-key "minddrop_config")
 
 ;; Keep these next three vars in sync!
 
