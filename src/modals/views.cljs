@@ -285,6 +285,34 @@ pool of drops, eg. setting a drop's source it itself."
               (for [[id label] filtered-labels]
                 [menu-item {:key id :value id} label])]])])))))
 
+;; on-complete! is a side-effecting function passed the selected drop-id upon completion
+(defn drop-selector-dialog
+  [button-label on-complete!]
+  (let [open?         (r/atom false)
+        open-modal!  #(open-modal! open?)
+        selected-id   (r/atom nil)
+        close-modal!  (fn []
+                        (reset! selected-id nil)
+                        (reset! open? false))]
+    (fn []
+      [:<>
+       [button
+        {:variant "outlined"
+         :on-click open-modal!}
+        button-label]
+       [dialog
+        {:open     @open?
+         :on-close close-modal!}
+        [dialog-title "Select Drop"]
+        [dialog-content
+         [drop-selector selected-id [(constants :master-id)]]
+         [dialog-actions
+          [button {:on-click (fn [_]
+                               (on-complete! @selected-id)
+                               (close-modal!))
+                   :disabled (not @selected-id)} "Select"]
+          [button {:on-click close-modal!} "Cancel"]]]]])))
+
 (defn jump-to-drop-dialog []
   (let [open?         (r/atom false)
         open-modal!  #(open-modal! open?)
@@ -358,6 +386,17 @@ pool of drops, eg. setting a drop's source it itself."
          [:div.settings_group
           [:h3  "— General"]
           [setting-toggle-boolean :confirm-before-action]]
+         [:div.settings_group
+          [:h3  "— Startup"]
+          [:div {:style
+                 {:display "flex" :justify-content "space-between"
+                  :align-items "center"}}
+           [tooltip {:title (config/descriptions :home-source)
+                     :arrow true}
+            [:label "Home Source: "]]
+            [drop-selector-dialog "Select"
+             #(rf/dispatch [::events/config-as :home-source %])]]
+         ]
          [:div.settings_group
           [:h3  "— Drops"]
           [button
