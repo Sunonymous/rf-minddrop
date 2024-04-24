@@ -210,7 +210,9 @@ pool of drops, eg. setting a drop's source it itself."
    (let [labels      @(rf/subscribe [::subs/drop-labels])
          tags        @(rf/subscribe [::subs/all-drop-tags])
          tag-filter   (r/atom "")
-         label-filter (r/atom "")]
+         label-filter (r/atom "")
+         search-labels? (r/atom true)
+         search-tags?   (r/atom false)]
      (fn [selected-id* excluded-ids]
        (let [exclusions      (set excluded-ids)
              filtered-labels (filter
@@ -254,8 +256,18 @@ pool of drops, eg. setting a drop's source it itself."
               :size "large"}
              "X"]]
            (when (seq tags)
-             [:div
-              [form-control {:sx {:display "block"} :variant "standard"}
+             [:div {:sx {:display "flex" :align-items "center"}}
+              [form-control
+               [form-control-label
+                {:label "Search by Tag"
+                 :label-placement "start"
+                 :control
+                 (r/as-element
+                  [switch {:checked @search-tags?
+                           :on-change #(reset! search-tags? (-> % .-target .-checked))}])}]]
+              [form-control {:sx {:display "block"
+                                  :visibility (if @search-tags? "visible" "hidden")}
+                             :variant "standard"}
                [input-label {:id "select-tag-input-label"} "Tagged with:"]
                [select
                 {:sx {:min-width "150px"}
@@ -285,7 +297,8 @@ pool of drops, eg. setting a drop's source it itself."
               (for [[id label] filtered-labels]
                 [menu-item {:key id :value id} label])]])])))))
 
-;; on-complete! is a side-effecting function passed the selected drop-id upon completion
+;; on-complete! is a side-effecting function passed the
+;;   selected drop-id upon completion
 (defn drop-selector-dialog
   [button-label on-complete!]
   (let [open?         (r/atom false)
