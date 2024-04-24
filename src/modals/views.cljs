@@ -410,6 +410,7 @@ pool of drops, eg. setting a drop's source it itself."
          [:div.settings_group
           [:h3  "— General"]
           [setting-toggle-boolean :confirm-before-action]]
+
          [:div.settings_group
           [:h3  "— Startup"]
           [:div {:style
@@ -418,9 +419,13 @@ pool of drops, eg. setting a drop's source it itself."
            [tooltip {:title (config/descriptions :home-source)
                      :arrow true}
             [:label "Home Source: "]]
-            [drop-selector-dialog "Select"
-             #(rf/dispatch [::events/config-as :home-source %])]]
-         ]
+           [drop-selector-dialog "Select"
+            #(rf/dispatch [::events/config-as :home-source %])]]
+          [:p "(Currently: "
+               [:span {:style {:font-style "italic"}}
+                (:label @(rf/subscribe [::subs/drop (config/of :home-source)]))]
+              ")"]]
+
          [:div.settings_group
           [:h3  "— Drops"]
           [button
@@ -441,6 +446,7 @@ pool of drops, eg. setting a drop's source it itself."
            "Unfocus All Drops"]
           [setting-toggle-boolean :prefill-relabel]
           [setting-toggle-boolean :add-inside-open-drop]]
+
          [:div.settings_group
           [:h3  "— User Data"]
          ;; TODO get the functions in this component a little more isolated
