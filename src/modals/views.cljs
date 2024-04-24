@@ -40,6 +40,9 @@
 ;; This file contains hiccup for particular dialogs and modals
 ;; that the user needs to interact with.
 
+;; Constant
+(def max-drops-shown-in-select 10)
+
 ;; General functions for reusability
 (defn open-modal!  [modal*] (reset! modal* true))
 
@@ -282,20 +285,28 @@ pool of drops, eg. setting a drop's source it itself."
                  :disabled (empty? @tag-filter)
                  :size "large"}
                 "X"]]])]
-          (if (empty? filtered-labels)
+          (cond
+            (empty? filtered-labels)
             [dialog-content-text "No drops match your search."]
-            [form-control
-             {:sx {:display "block" :margin-top "1em"}
-              :variant "standard"}
-             [input-label {:id "select-drop-input-label"} "Choose a Drop:"]
-             [select
-              {:sx {:min-width "150px"}
-               :label-id  "select-drop-input-label"
-               :disabled  (empty? filtered-labels)
-               :value     (or @selected-id* "")
-               :on-change #(reset! selected-id* (-> % .-target .-value))}
-              (for [[id label] filtered-labels]
-                [menu-item {:key id :value id} label])]])])))))
+
+            (> (count filtered-labels) max-drops-shown-in-select)
+            [dialog-content-text "Please refine your search."]
+
+            :otherwise
+            [:div
+             [form-control
+              {:sx {:display "inline-block" :margin-top "1em"}
+               :variant "standard"}
+              [input-label {:id "select-drop-input-label"} "Choose a Drop:"]
+              [select
+               {:sx {:min-width "150px"}
+                :label-id  "select-drop-input-label"
+                :disabled  (empty? filtered-labels)
+                :value     (or @selected-id* "")
+                :on-change #(reset! selected-id* (-> % .-target .-value))}
+               (for [[id label] filtered-labels]
+                 [menu-item {:key id :value id} label])]]
+             ])])))))
 
 ;; on-complete! is a side-effecting function passed the
 ;;   selected drop-id upon completion
