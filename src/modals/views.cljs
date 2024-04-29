@@ -302,11 +302,14 @@ pool of drops, eg. setting a drop's source it itself."
                {:sx {:min-width "150px"}
                 :label-id  "select-drop-input-label"
                 :disabled  (empty? filtered-labels)
-                :value     (or @selected-id* "")
+                :value     (if (= 1 (count filtered-labels))
+                             (let [[id _] (first filtered-labels)] ;; a filtered-label is [id label]
+                               (reset! selected-id* id) ;; strange to have a component reset state here...
+                               id)                      ;; was concerned this might interfere, though
+                             (or @selected-id* ""))     ;; seems to be okay from testing
                 :on-change #(reset! selected-id* (-> % .-target .-value))}
                (for [[id label] filtered-labels]
-                 [menu-item {:key id :value id} label])]]
-             ])])))))
+                 [menu-item {:key id :value id} label])]]])])))))
 
 ;; on-complete! is a side-effecting function passed the
 ;;   selected drop-id upon completion
